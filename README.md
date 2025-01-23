@@ -17,9 +17,8 @@ go run server.go
 bun install
 ```
 ### Setup Environment
-```bash
- // todo
-```
+- Create a file '.env' in /backend/config/ 
+- add environment variables
 ### Start Dev Server
 ```bash
 bun run dev
