@@ -10,7 +10,7 @@ import (
 
 func InitDb(cfg *config.Config) (*sqlx.DB, error) {
 	// Create connection string
-	connStr := fmt.Sprintf("user=%s dbname=%s sslmode=%s password=%s host=%s port=%s", cfg.DB.DbUser, cfg.DB.DbName, cfg.DB.DbSslMode, cfg.DB.DbPassword, cfg.DB.DbHost, cfg.DB.DbPort)
+	connStr := fmt.Sprintf("user=%s dbname=%s sslmode=%s password=%s host=%s port=%s", cfg.DB.User, cfg.DB.Name, cfg.DB.SslMode, cfg.DB.Password, cfg.DB.Host, cfg.DB.Port)
 
 	// Open database connection
 	db, err := sqlx.Connect("postgres", connStr)
