@@ -13,8 +13,8 @@ import (
 )
 
 type Config struct {
-	DB    PostgresConfig
-	Port  string
+	DB   PostgresConfig
+	Port string
 }
 
 type PostgresConfig struct {
