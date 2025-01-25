@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"wealthscope/backend/config"
-	"wealthscope/backend/server"
+	server "wealthscope/backend/internal/app"
 )
 
 // todo - should start the server from main
@@ -13,6 +13,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
-    
-    server.StartServer(cfg)
+
+	server.StartServer(cfg)
 }

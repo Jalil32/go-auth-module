@@ -10,8 +10,8 @@ func StartServer(cfg *config.Config) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/data", returnTestData)
 
-    log.Printf("Starting server on port :%s", cfg.Port)
-	err := http.ListenAndServe(":" + cfg.Port, mux)	
+	log.Printf("Starting server on port :%s", cfg.Port)
+	err := http.ListenAndServe(":"+cfg.Port, mux)
 	log.Fatal(err)
 }
 
