@@ -1,9 +1,11 @@
 ### Running The Backend
 cd backend
-go run cmd/main.go
+go run cmd/app/main.go
 
 ### Setup Environment
 - Create a file '.env' in /backend/config/
+- There is a template called .env.template
+- The template is already set up for local database connection
 - add environment variables
 
 ### Start Dev Server

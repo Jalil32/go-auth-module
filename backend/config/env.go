@@ -18,24 +18,26 @@ type Config struct {
 }
 
 type PostgresConfig struct {
-	Username string
-	Password string
-	URL      string
-	Port     string
+	DbUser     string
+	DbName     string
+	DbPassword string
+	DbHost     string
+	DbPort     string
+	DbSslMode  string
 }
 
 func LoadConfig() (*Config, error) {
 
 	cfg := &Config{
 		Port: os.Getenv("PORT"),
-
-		// todo - we will need this configuration at some stage...
-		// DB: PostgresConfig{
-		// 	Username: os.Getenv("POSTGRES_USER"),
-		// 	Password: os.Getenv("POSTGRES_PWD"),
-		// 	URL:      os.Getenv("POSTGRES_URL"),
-		// 	Port:     os.Getenv("POSTGRES_PORT"),
-		// },
+		DB: PostgresConfig{
+			DbUser:     os.Getenv("POSTGRES_USER"),
+			DbName:     os.Getenv("POSTGRES_DB"),
+			DbPassword: os.Getenv("POSTGRES_PASSWORD"),
+			DbHost:     os.Getenv("POSTGRES_HOST"),
+			DbPort:     os.Getenv("POSTGRES_PORT"),
+			DbSslMode:  os.Getenv("POSTGRES_SSL_MODE"),
+		},
 	}
 
 	return cfg, nil
