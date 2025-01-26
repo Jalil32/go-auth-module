@@ -1,34 +1,25 @@
 package server
 
 import (
-	"log"
-	"net/http"
+	"log/slog"
 	"wealthscope/backend/config"
+	"wealthscope/backend/internal/routes"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
 )
 
-func StartServer(cfg *config.Config, db *sqlx.DB) error {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/api/data", returnTestData)
+func StartServer(cfg *config.Config, db *sqlx.DB, logger *slog.Logger) error {
 
-	// Test the database connection
-	if err := db.Ping(); err != nil {
-		return err
-	} else {
-		log.Println("Successfully connected")
-	}
+	// Initalise gin router
+	router := gin.Default()
 
-	log.Printf("Starting server on port :%s", cfg.Port)
+	// Add authentication routes
+	routes.Routes(router)
 
-	err := http.ListenAndServe(":"+cfg.Port, mux)
+	// Start the server
+	logger.Info("Starting Server", "port", cfg.Port)
+	err := router.Run((":" + cfg.Port))
 
 	return err
-}
-
-func returnTestData(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%s %s called", r.Method, r.URL.Path)
-
-	w.Header().Set("Content-Type", "application/json") // jzml
-	w.Write([]byte(`{"message": "HELLO FROM BACKEND"}`))
 }
