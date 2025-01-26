@@ -8,10 +8,25 @@ go run cmd/app/main.go
 - The template is already set up for local database connection
 - add environment variables
 
-### Start Dev Server
-```bash
-bun run dev
+### Using Goose via CLI for migrations
+Creating a new migration:
+1. cd into migrations directory
+2. goose create <migration_name>
+
+Running all migrations:
 ```
+export $(cat .env | xargs)  # Load environment variables from .env file
+goose -dir ./migrations postgres "user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_NAME host=$POSTGRES_HOST port=$POSTGRES_PORT sslmode=$POSTGRES_SSL_MODE" up
+
+```
+
+Rolling back the last migrations:
+```
+export $(cat .env | xargs)  # Load environment variables from .env file
+
+goose -dir ./migrations postgres "user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_NAME host=$POSTGRES_HOST port=$POSTGRES_PORT sslmode=$POSTGRES_SSL_MODE" down
+```
+
 ### Start Dev Database
 1. Ensure you have docker, docker compose and postgres installed
 2. Start the docker daemon using
