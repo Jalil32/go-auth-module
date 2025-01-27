@@ -5,7 +5,7 @@ import (
 	"os"
 	"wealthscope/backend/config"
 	server "wealthscope/backend/internal/app"
-	"wealthscope/backend/internal/app/db"
+	"wealthscope/backend/internal/db"
 
 	"github.com/lmittmann/tint"
 )

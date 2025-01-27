@@ -7,6 +7,9 @@ go run cmd/app/main.go
 - There is a template called .env.template
 - The template is already set up for local database connection
 - add environment variables
+- to generate a secure key for JWT in the .env use:
+    - openssl rand -base64 32 on linux/mac
+    - if your on windows use WSL2 (lloyd... cough cough)
 
 ### Using Goose via CLI for migrations
 Creating a new migration:

@@ -13,8 +13,10 @@ import (
 )
 
 type Config struct {
-	DB   PostgresConfig
-	Port string
+	Port  string
+	DB    PostgresConfig
+	OAuth OAuthConfig
+	JWT   JWTConfig
 }
 
 type PostgresConfig struct {
@@ -24,6 +26,17 @@ type PostgresConfig struct {
 	Host     string
 	Port     string
 	SslMode  string
+}
+
+type OAuthConfig struct {
+	ClientID          string
+	ClientSecret      string
+	ClientCallbackURL string
+}
+
+type JWTConfig struct {
+	Token  string
+	Expiry string
 }
 
 func LoadConfig() (*Config, error) {
@@ -37,6 +50,15 @@ func LoadConfig() (*Config, error) {
 			Host:     os.Getenv("POSTGRES_HOST"),
 			Port:     os.Getenv("POSTGRES_PORT"),
 			SslMode:  os.Getenv("POSTGRES_SSL_MODE"),
+		},
+		OAuth: OAuthConfig{
+			ClientID:          os.Getenv("GOOGLE_CLIENT_ID"),
+			ClientSecret:      os.Getenv("GOOGLE_CLIENT_SECRET"),
+			ClientCallbackURL: os.Getenv("GOOGLE_CLIENT_CALLBACK_URL"),
+		},
+		JWT: JWTConfig{
+			Token:  os.Getenv("JWT_TOKEN"),
+			Expiry: os.Getenv("JWT_EXPIRY"),
 		},
 	}
 
