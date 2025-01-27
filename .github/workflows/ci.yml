@@ -22,10 +22,12 @@ jobs:
 
     # Install and test Go backend
     - name: Install dependencies for Go
+      working-directory: ./backend # Adjust to your React frontend directory
       run: go mod tidy
 
     - name: Test Go backend
-      run: go test ./...
+      working-directory: ./backend # Adjust to your React frontend directory
+      run: go test ./tests
 
     # Set up Node.js for React
     - name: Set up Node.js
@@ -42,6 +44,7 @@ jobs:
       working-directory: ./frontend
       run: npm run build
 
-    - name: Test React frontend
-      working-directory: ./frontend
-      run: npm test
+    # Uncomment once we have some front end tests
+    # - name: Test React frontend
+    #   working-directory: ./frontend
+    #   run: npm test
