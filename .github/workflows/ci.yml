@@ -33,7 +33,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 20.18.2 # Adjust to your Node.js version
+        node-version: 20 # Adjust to your Node.js version
 
     # Install and test React frontend
     - name: Install dependencies for React
