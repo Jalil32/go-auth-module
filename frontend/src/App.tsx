@@ -1,68 +1,26 @@
-import { useState } from "react";
 import "./index.css";
-import { Button } from "@/components/ui/button";
-import {
-	ChartTooltip,
-	ChartContainer,
-	type ChartConfig,
-	ChartTooltipContent,
-} from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import LoginPage from "./pages/login";
+import ChartComponent from "./components/chart";
+import RegisterPage from "./pages/register";
+
+const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <LoginPage />,
+  },
+  {
+    path: "/register",
+    element: <RegisterPage />,
+  },
+  {
+    path: "/",
+    element: <ChartComponent></ChartComponent>,
+  },
+]);
 
 function App() {
-	const [count, setCount] = useState(0);
-
-	return (
-		<>
-			<div className="flex flex-col bg-background max-w-md m-auto gap-y-5">
-				<h1 className="text-3xl font-bold underline">Hello world!</h1>
-				<Button onClick={() => setCount((count) => count + 1)}>Up</Button>
-				<p>{count}</p>
-				<Button onClick={() => setCount((count) => count - 1)}>Down</Button>
-				<ChartComponent />
-			</div>
-		</>
-	);
-}
-
-export function ChartComponent() {
-	const chartData = [
-		{ month: "January", desktop: 186, mobile: 80 },
-		{ month: "February", desktop: 305, mobile: 200 },
-		{ month: "March", desktop: 237, mobile: 120 },
-		{ month: "April", desktop: 73, mobile: 190 },
-		{ month: "May", desktop: 209, mobile: 130 },
-		{ month: "June", desktop: 214, mobile: 140 },
-	];
-
-	const chartConfig = {
-		desktop: {
-			label: "Desktop",
-			color: "#2563eb",
-		},
-		mobile: {
-			label: "Mobile",
-			color: "#60a5fa",
-		},
-	} satisfies ChartConfig;
-
-	return (
-		<ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-			<BarChart accessibilityLayer data={chartData}>
-				<CartesianGrid vertical={false} />
-				<XAxis
-					dataKey="month"
-					tickLine={false}
-					tickMargin={10}
-					axisLine={false}
-					tickFormatter={(value) => value.slice(0, 3)}
-				/>
-				<ChartTooltip content={<ChartTooltipContent />} />
-				<Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-				<Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-			</BarChart>
-		</ChartContainer>
-	);
+  return <RouterProvider router={router} />;
 }
 
 export default App;
