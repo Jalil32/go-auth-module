@@ -1,34 +1,38 @@
 package server
 
 import (
-	"log"
-	"net/http"
+	"log/slog"
 	"wealthscope/backend/config"
+	"wealthscope/backend/internal/routes"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/providers/google"
 )
 
-func StartServer(cfg *config.Config, db *sqlx.DB) error {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/api/data", returnTestData)
+func StartServer(cfg *config.Config, db *sqlx.DB, logger *slog.Logger) error {
 
-	// Test the database connection
-	if err := db.Ping(); err != nil {
-		return err
-	} else {
-		log.Println("Successfully connected")
-	}
+	// Setup OAuth providers
+	goth.UseProviders(
+		google.New(cfg.OAuth.ClientID, cfg.OAuth.ClientSecret, cfg.OAuth.ClientCallbackURL, "email", "profile"),
+	)
 
-	log.Printf("Starting server on port :%s", cfg.Port)
+	// Set gin to release mode so we get clean logs
+	gin.SetMode(gin.ReleaseMode)
 
-	err := http.ListenAndServe(":"+cfg.Port, mux)
+	// Initialise gin router
+	router := gin.New()
+
+	// This means all our logs will be same format instead of a mix between gins and slogs
+	router.Use(CustomLogger(logger))
+
+	// Register routes
+	routes.Routes(router, db, logger)
+
+	// Start the server
+	logger.Info("Starting Server", "port", cfg.Port)
+	err := router.Run((":" + cfg.Port))
 
 	return err
-}
-
-func returnTestData(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%s %s called", r.Method, r.URL.Path)
-
-	w.Header().Set("Content-Type", "application/json") // jzml
-	w.Write([]byte(`{"message": "HELLO FROM BACKEND"}`))
 }
