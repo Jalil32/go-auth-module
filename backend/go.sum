@@ -88,6 +88,8 @@ github.com/pelletier/go-toml/v2 v2.2.3 h1:YmeHyLY8mFWbdkNWwpr+qIL2bEqT0o95WSdkNH
 github.com/pelletier/go-toml/v2 v2.2.3/go.mod h1:MfCQTFTvCcUyyvvwm1+G6H/jORL20Xlb6rzQu9GuUkc=
 github.com/piquette/finance-go v1.1.0 h1:3J5VBP6aPhvrj9Eg6Eus8eM6QJlX4l/wCfrJhONjS3k=
 github.com/piquette/finance-go v1.1.0/go.mod h1:jaHaD5JJEWpl5mW712M8gRboc2xvhjshF3lqw/ke7AA=
+github.com/piquette/finance-go v1.1.1-0.20230701203135-40d4ac6e73cf h1:N5ZcYsMVzAPQGyijGKt6AEIyypl0YbkYlYz0I8ARY8A=
+github.com/piquette/finance-go v1.1.1-0.20230701203135-40d4ac6e73cf/go.mod h1:poxlBrjukrG0oBX74H0ewcCMPvX3dGGgO4pln6rNAqI=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
