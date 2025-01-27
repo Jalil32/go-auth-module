@@ -22,7 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Backend Environment Variables
-backend/.env
-backend/build/*
