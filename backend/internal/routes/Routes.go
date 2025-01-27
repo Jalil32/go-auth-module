@@ -2,6 +2,7 @@ package routes
 
 import (
 	"log/slog"
+	"net/http"
 	"wealthscope/backend/internal/controllers"
 
 	"github.com/gin-gonic/gin"
@@ -28,6 +29,19 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 			auth.GET("/:provider", authController.SignInWithProvider)
 			auth.GET("/:provider/callback", authController.CallbackHandler)
 		}
+
+		// Stock Quotes routes
+		api.GET("/stock/:symbol", func(c *gin.Context) {
+			symbol := c.Param("symbol")
+			stockQuote, err := GetStockQuote(symbol)
+
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{"symbol": symbol, "quote": stockQuote})
+		})
 	}
 
 	return nil
