@@ -34,16 +34,23 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 20 # Adjust to your Node.js version
+        
+    # Install Bun
+    - name: Install Bun
+      run: |
+        curl -fsSL https://bun.sh/install | bash
+        export PATH="/home/runner/.bun/bin:$PATH"
 
-    # Install and test React frontend
-    - name: Install dependencies for React
-      working-directory: ./frontend # Adjust to your React frontend directory
-      run: npm install
+    # Install dependencies for React
+    - name: Install dependencies
+      working-directory: ./frontend # Adjust if necessary
+      run: bun install
 
+    # Build React frontend
     - name: Build React frontend
       working-directory: ./frontend
-      run: npm run build
-
+      run: bunx vite build
+      
     # Uncomment once we have some front end tests
     # - name: Test React frontend
     #   working-directory: ./frontend
