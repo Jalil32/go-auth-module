@@ -2,8 +2,10 @@ package routes
 
 import (
 	"log/slog"
+
 	"net/http"
-	"wealthscope/backend/internal/controllers"
+	"wealthscope/backend/internal/controllers/auth"
+
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -11,7 +13,7 @@ import (
 
 func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 	// Initialise Auth Controller instance
-	authController, err := controllers.NewAuthController(db, logger)
+	authController, err := auth.NewAuthController(db, logger)
 
 	if err != nil {
 		logger.Error("Failed to initialise AuthController", "error", err)
