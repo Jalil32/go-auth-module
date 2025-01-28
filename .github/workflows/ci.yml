@@ -39,7 +39,7 @@ jobs:
     - name: Install Bun
       run: |
         curl -fsSL https://bun.sh/install | bash
-        source ~/.bashrc  # Reload the shell environment
+        source /home/runner/.bashrc
         
     - name: Run Bun Install
       run: bun install
