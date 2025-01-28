@@ -35,11 +35,14 @@ jobs:
       with:
         node-version: 20 # Adjust to your Node.js version
         
-    # Install Bun
+
     - name: Install Bun
       run: |
         curl -fsSL https://bun.sh/install | bash
-        export PATH="/home/runner/.bun/bin:$PATH"
+        source ~/.bashrc  # Reload the shell environment
+        
+    - name: Run Bun Install
+      run: bun install
 
     # Install dependencies for React
     - name: Install dependencies
