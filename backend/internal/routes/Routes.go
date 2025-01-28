@@ -2,8 +2,8 @@ package routes
 
 import (
 	"log/slog"
-	"net/http"
 	"wealthscope/backend/internal/controllers"
+	"wealthscope/backend/internal/controllers/stock"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -18,6 +18,9 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 		return err
 	}
 
+	// Initialise Stock Controller instance
+	stockController := stock.NewStockController(logger)
+
 	// Register controllers to routes
 	api := router.Group("/api")
 	{
@@ -30,18 +33,10 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 			auth.GET("/:provider/callback", authController.CallbackHandler)
 		}
 
-		// Stock Quotes routes
-		api.GET("/stock/:symbol", func(c *gin.Context) {
-			symbol := c.Param("symbol")
-			stockQuote, err := GetStockQuote(symbol)
-
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-
-			c.JSON(http.StatusOK, gin.H{"symbol": symbol, "quote": stockQuote})
-		})
+		stock := api.Group("/stock")
+		{
+			stock.GET(":symbol", stockController.GetStockQuoteHandler)
+		}
 	}
 
 	return nil
