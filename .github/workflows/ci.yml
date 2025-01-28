@@ -37,19 +37,16 @@ jobs:
         
     - name: Install Bun
       run: curl -fsSL https://bun.sh/install | bash
-  
-    - name: Run Bun Install
+      
+    # Install dependencies for React  
+    - name: Install frontend dependencies
+      working-directory: ./frontend
       run: ~/.bun/bin/bun install
-
-    # Install dependencies for React
-    - name: Install dependencies
-      working-directory: ./frontend # Adjust if necessary
-      run: bun install
 
     # Build React frontend
     - name: Build React frontend
       working-directory: ./frontend
-      run: bunx vite build
+      run: ~/.bun/bin/bunx vite build
       
     # Uncomment once we have some front end tests
     # - name: Test React frontend
