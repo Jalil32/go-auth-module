@@ -55,7 +55,6 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 	// Regex pattern to match date, amount and description values
 	datePattern := regexp.MustCompile(`^\d{2}/\d{2}/\d{4}$`)
 	amountPattern := regexp.MustCompile(`^-?\d+\.\d{2}$`)
-	descriptionPattern := regexp.MustCompile(`^[A-Z_]+$`)
 
 	// Iterate over the records and store them in the map
 	for _, record := range records {
@@ -63,23 +62,30 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 		var amount float64
 		var description string
 
+		dateFound := false
+		amountFound := false
+		descriptionFound := false
+
 		for _, field := range record {
-			if datePattern.MatchString(field) {
+			if datePattern.MatchString(field) && !dateFound {
 				date, err = time.Parse("02/01/2006", field) // DD/MM/YYYY
 				if err != nil {
 					bc.Logger.Error("Failed to parse date", "error", err)
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse date"})
 					return
 				}
-			} else if amountPattern.MatchString(field) {
+				dateFound = true
+			} else if amountPattern.MatchString(field) && !amountFound {
 				amount, err = strconv.ParseFloat(field, 64)
 				if err != nil {
 					bc.Logger.Error("Failed to parse amount", "error", err)
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse amount"})
 					return
 				}
-			} else if descriptionPattern.MatchString(field) {
+				amountFound = true
+			} else if !descriptionFound {
 				description = field
+				descriptionFound = true
 			}
 		}
 
