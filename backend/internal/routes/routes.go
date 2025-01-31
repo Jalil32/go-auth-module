@@ -3,6 +3,7 @@ package routes
 import (
 	"log/slog"
 	"wealthscope/backend/internal/controllers/auth"
+	"wealthscope/backend/internal/controllers/bank"
 	"wealthscope/backend/internal/controllers/stock"
 
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,9 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 	// Initialise Stock Controller instance
 	stockController := stock.NewStockController(logger)
 
+	// Initialise Bank Controller instance
+	bankController := bank.NewBankController(logger)
+
 	// Register controllers to routes
 	api := router.Group("/api")
 	{
@@ -36,6 +40,11 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 		stock := api.Group("/stock")
 		{
 			stock.GET(":symbol", stockController.GetStockQuoteHandler)
+		}
+
+		bank := api.Group("/bank")
+		{
+			bank.POST("/upload", bankController.UploadBankStatement)
 		}
 	}
 
