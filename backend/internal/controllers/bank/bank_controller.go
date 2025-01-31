@@ -1,12 +1,15 @@
 package bank
 
 import (
+	"encoding/csv"
 	"log/slog"
-	"mime/multipart"
 	"net/http"
+	"strconv"
+	"time"
+	"wealthscope/backend/internal/models"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ledongthuc/pdf"
+	"github.com/google/uuid"
 )
 
 type BankController struct {
@@ -27,47 +30,59 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 		return
 	}
 
+	// Open the uploaded file
 	f, err := file.Open()
 	if err != nil {
 		bc.Logger.Error("Failed to open file", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to open file"})
 		return
 	}
+	defer f.Close() // Guarantee the file is closed
 
-	defer f.Close() // Guarantee file closure
-
-	content, err := readPdf(f, file.Size)
+	// Parse the CSV file
+	reader := csv.NewReader(f)
+	records, err := reader.ReadAll()
 	if err != nil {
-		bc.Logger.Error("Failed to read PDF", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read PDF"})
+		bc.Logger.Error("Failed to parse CSV file", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse CSV file"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"content": content})
-}
+	// Create a map to store transactions
+	transactions := make(map[string]models.Transaction)
 
-func readPdf(f multipart.File, fileSize int64) (string, error) {
-	r, err := pdf.NewReader(f, fileSize)
-	if err != nil {
-		return "", err
-	}
-	totalPage := r.NumPage()
-
-	var content string
-	for pageIndex := 1; pageIndex <= totalPage; pageIndex++ {
-		p := r.Page(pageIndex)
-		if p.V.IsNull() {
-			continue
+	// Iterate over the records and store them in the map
+	for _, record := range records {
+		date, err := time.Parse("02/01/2006", record[0]) // DD/MM/YYYY
+		if err != nil {
+			bc.Logger.Error("Failed to parse date", "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse date"})
+			return
 		}
 
-        rows, _ := p.GetTextByRow()
-        for _, row := range rows {
-            for _, word := range row.Content {
-                content += word.S + " "
-            }
-            content += "\n"
-        }
-    }
+		amount, err := strconv.ParseFloat(record[1], 64)
+		if err != nil {
+			bc.Logger.Error("Failed to parse amount", "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse amount"})
+			return
+		}
 
-    return content, nil
+		transaction := models.Transaction{
+			ID:          uuid.New().String(),
+			Date:        date,
+			Amount:      amount,
+			Description: record[2],
+		}
+
+		transactions[transaction.ID] = transaction
+	}
+
+	// Log the transactions for debugging [Optional]
+	for id, transaction := range transactions {
+		bc.Logger.Info("Transaction stored", "id", id, "transaction", transaction)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully", "transactions": transactions})
+
+	// TODO: Save the transactions to the database with User ID
 }
