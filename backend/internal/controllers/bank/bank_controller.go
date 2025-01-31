@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"strconv"
 	"time"
 	"wealthscope/backend/internal/models"
@@ -51,27 +52,42 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 	// Create a map to store transactions
 	transactions := make(map[string]models.Transaction)
 
+	// Regex pattern to match date, amount and description values
+	datePattern := regexp.MustCompile(`^\d{2}/\d{2}/\d{4}$`)
+	amountPattern := regexp.MustCompile(`^-?\d+\.\d{2}$`)
+	descriptionPattern := regexp.MustCompile(`^[A-Z_]+$`)
+
 	// Iterate over the records and store them in the map
 	for _, record := range records {
-		date, err := time.Parse("02/01/2006", record[0]) // DD/MM/YYYY
-		if err != nil {
-			bc.Logger.Error("Failed to parse date", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse date"})
-			return
-		}
+		var date time.Time
+		var amount float64
+		var description string
 
-		amount, err := strconv.ParseFloat(record[1], 64)
-		if err != nil {
-			bc.Logger.Error("Failed to parse amount", "error", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse amount"})
-			return
+		for _, field := range record {
+			if datePattern.MatchString(field) {
+				date, err = time.Parse("02/01/2006", field) // DD/MM/YYYY
+				if err != nil {
+					bc.Logger.Error("Failed to parse date", "error", err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse date"})
+					return
+				}
+			} else if amountPattern.MatchString(field) {
+				amount, err = strconv.ParseFloat(field, 64)
+				if err != nil {
+					bc.Logger.Error("Failed to parse amount", "error", err)
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse amount"})
+					return
+				}
+			} else if descriptionPattern.MatchString(field) {
+				description = field
+			}
 		}
 
 		transaction := models.Transaction{
 			ID:          uuid.New().String(),
 			Date:        date,
 			Amount:      amount,
-			Description: record[2],
+			Description: description,
 		}
 
 		transactions[transaction.ID] = transaction
