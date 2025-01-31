@@ -1,26 +1,22 @@
 import "./index.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import LoginPage from "./pages/login";
 import ChartComponent from "./components/chart";
-import RegisterPage from "./pages/register";
+import AuthPage from "./pages/AuthPage";
+import Dashboard from "./pages/Dashboard";
 
 const router = createBrowserRouter([
-  {
-    path: "/login",
-    element: <LoginPage />,
-  },
-  {
-    path: "/register",
-    element: <RegisterPage />,
-  },
-  {
-    path: "/",
-    element: <ChartComponent></ChartComponent>,
-  },
+	{
+		path: "/auth",
+		element: <AuthPage />,
+	},
+	{
+		path: "/",
+		element: <Dashboard />,
+	},
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+	return <RouterProvider router={router} />;
 }
 
 export default App;
