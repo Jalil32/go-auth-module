@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS bank_transactions (
     user_id INT NOT NULL,						-- Foreign key to the user who made the transaction
     date TIMESTAMP NOT NULL,				-- Date of transaction
     amount_cents INT NOT NULL,					-- Transaction amount in cents
-    description TEXT,						-- Optional transaction description
+    description TEXT						-- Optional transaction description
+);
 -- +goose StatementEnd
 
 -- +goose Down
