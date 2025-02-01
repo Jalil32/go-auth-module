@@ -5,6 +5,6 @@ import "time"
 type Transaction struct {
 	ID          string
 	Date        time.Time
-	Amount      float64
+	AmountCents int
 	Description string
 }

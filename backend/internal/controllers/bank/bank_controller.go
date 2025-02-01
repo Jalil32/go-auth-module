@@ -59,8 +59,8 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 	// Iterate over the records and store them in the map
 	for _, record := range records {
 		var date time.Time
-		var amount float64
-		var description string
+		var amount int                            // Amount in cents
+		var description string = "No description" // Default description
 
 		dateFound := false
 		amountFound := false
@@ -76,12 +76,13 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 				}
 				dateFound = true
 			} else if amountPattern.MatchString(field) && !amountFound {
-				amount, err = strconv.ParseFloat(field, 64)
+				parsedAmount, err := strconv.ParseFloat(field, 64)
 				if err != nil {
 					bc.Logger.Error("Failed to parse amount", "error", err)
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse amount"})
 					return
 				}
+				amount = int(parsedAmount * 100) // Convert dollars to cents
 				amountFound = true
 			} else if !descriptionFound {
 				description = field
@@ -89,14 +90,17 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 			}
 		}
 
-		transaction := models.Transaction{
-			ID:          uuid.New().String(),
-			Date:        date,
-			Amount:      amount,
-			Description: description,
-		}
+		// Create a transaction object if at least the date and amount are found
+		if dateFound && amountFound {
+			transaction := models.Transaction{
+				ID:          uuid.New().String(),
+				Date:        date,
+				AmountCents: amount,
+				Description: description, // Default description is "No description"
+			}
 
-		transactions[transaction.ID] = transaction
+			transactions[transaction.ID] = transaction
+		}
 	}
 
 	// Log the transactions for debugging [Optional]
