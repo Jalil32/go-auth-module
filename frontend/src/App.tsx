@@ -1,6 +1,5 @@
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import "./index.css";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import ChartComponent from "./components/chart";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 
@@ -10,7 +9,7 @@ const router = createBrowserRouter([
 		element: <AuthPage />,
 	},
 	{
-		path: "/",
+		path: "/dashboard",
 		element: <Dashboard />,
 	},
 ]);
