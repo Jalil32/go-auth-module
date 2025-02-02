@@ -31,7 +31,7 @@ const GenericPageTemplate = ({ pageContent }: GenericPageTemplateProps) => {
 	// Dynamically generate breadcrumb links based on the current URL
 	const getBreadCrumbLinks = (items: string[]) => {
 		const domain = items.slice(0, 3).join("/"); // e.g. https://wealthscope.com
-		const breadCrumbName: string[] = items.slice(3, items.length).map(
+		const breadCrumbNames: string[] = items.slice(3, items.length).map(
 			(c) =>
 				c
 					.replace(/-/g, " ")
@@ -39,7 +39,7 @@ const GenericPageTemplate = ({ pageContent }: GenericPageTemplateProps) => {
 		); // e.g. "https://wealthscope.com/dashboard/assets" -> ["Dashboard", "Assets"]
 		const breadCrumbLinks: { [key: string]: string } = {};
 
-		breadCrumbName.forEach((name, index) => {
+		breadCrumbNames.forEach((name, index) => {
 			const path = items.slice(3, 4 + index).join("/");
 			breadCrumbLinks[name] = `${domain}/${path}`;
 		});
