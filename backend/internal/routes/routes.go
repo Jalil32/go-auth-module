@@ -26,7 +26,7 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 	stockController := stock.NewStockController(logger)
 
 	// Initialise Bank Controller instance
-	bankController := bank.NewBankController(logger)
+	bankController := bank.NewBankController(logger, db)
 
 	// Register controllers to routes
 	api := router.Group("/api")

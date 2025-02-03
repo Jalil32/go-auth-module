@@ -10,16 +10,18 @@ import (
 	"wealthscope/backend/internal/models"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 )
 
 type BankController struct {
 	Logger *slog.Logger
+	DB     *sqlx.DB
 }
 
-func NewBankController(logger *slog.Logger) *BankController {
+func NewBankController(logger *slog.Logger, db *sqlx.DB) *BankController {
 	return &BankController{
 		Logger: logger,
+		DB:     db,
 	}
 }
 
@@ -49,12 +51,12 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 		return
 	}
 
-	// Create a map to store transactions
-	transactions := make(map[string]models.Transaction)
-
 	// Regex pattern to match date, amount and description values
 	datePattern := regexp.MustCompile(`^\d{2}/\d{2}/\d{4}$`)
 	amountPattern := regexp.MustCompile(`^-?\d+\.\d{2}$`)
+
+	// Create a slice to store the transactions
+	var transactions []models.Transaction
 
 	// Iterate over the records and store them in the map
 	for _, record := range records {
@@ -92,23 +94,42 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 
 		// Create a transaction object if at least the date and amount are found
 		if dateFound && amountFound {
+			// TODO: [WEALT-15] Once Jalil completes authentication, replace the hardcoded User ID with the authenticated User ID
 			transaction := models.Transaction{
-				ID:          uuid.New().String(),
+				UserId:      1, // Hardcoded User ID for now
 				Date:        date,
 				AmountCents: amount,
 				Description: description, // Default description is "No description"
 			}
 
-			transactions[transaction.ID] = transaction
+			// Insert the transaction into the database
+			transactionId, err := bc.insertTransaction(transaction)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert transaction"})
+				return
+			}
+			transaction.TransactionId = transactionId
+			transactions = append(transactions, transaction)
+
+			// [Optional] Log the transaction
+			bc.Logger.Info("Transaction inserted successfully", "transaction", transaction)
 		}
 	}
 
-	// Log the transactions for debugging [Optional]
-	for id, transaction := range transactions {
-		bc.Logger.Info("Transaction stored", "id", id, "transaction", transaction)
+	c.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully", "transactions": transactions})
+}
+
+func (bc *BankController) insertTransaction(transaction models.Transaction) (int, error) {
+	// Insert the transaction into the database
+	query := `INSERT INTO bank_transactions (user_id, date, amount_cents, description)
+			  VALUES ($1, $2, $3, $4) RETURNING transaction_id`
+	var transactionId int
+	err := bc.DB.QueryRowx(query, transaction.UserId, transaction.Date, transaction.AmountCents, transaction.Description).Scan(&transactionId)
+	if err != nil {
+		bc.Logger.Error("Failed to insert transaction", "details", transaction, "error", err)
+		return -1, err
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "File uploaded successfully", "transactions": transactions})
-
-	// TODO: Save the transactions to the database with User ID
+	// Return the transaction ID of the newly inserted transaction
+	return transactionId, nil
 }
