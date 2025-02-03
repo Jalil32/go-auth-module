@@ -8,66 +8,66 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Register handles user registration.
-func (a *AuthController) Register(c *gin.Context) {
-	var newUser models.User
+type RegisterRequest struct {
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+}
 
-	// Bind the JSON request body to the newUser struct
-	if err := c.ShouldBindJSON(&newUser); err != nil {
-		a.Logger.Error("Failed to bind JSON", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+func (a *AuthController) Register(c *gin.Context) {
+	var req RegisterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		a.handleError(c, http.StatusBadRequest, "Invalid request payload", err)
 		return
 	}
 
-	// Check if the user already exists
-	existingUser, err := db.FindUserByEmail(a.DB, newUser.Email)
+	existingUser, err := db.FindUserByEmail(a.DB, req.Email)
 	if err != nil {
-		a.Logger.Error("Database error during user lookup", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error during user lookup"})
+		a.handleError(c, http.StatusInternalServerError, "Database error during user lookup", err)
 		return
 	}
 
 	if existingUser != nil {
-		a.Logger.Error("User already exists", "email", newUser.Email)
-		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
+		a.handleError(c, http.StatusConflict, "User already exists", nil)
 		return
 	}
 
-	if newUser.PasswordHash == nil {
-		a.Logger.Error("No password given")
-		c.JSON(http.StatusConflict, gin.H{"error": "Please enter a password"})
-		return
-	}
-
-	// Hash the password before storing it in the database
-	hashedPassword, err := hashPassword(*newUser.PasswordHash)
+	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
-		a.Logger.Error("Failed to hash password", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		a.handleError(c, http.StatusInternalServerError, "Failed to hash password", err)
 		return
 	}
 
-	newUser.PasswordHash = &hashedPassword
-
-	// Create the new user in the database
-	err = db.CreateUser(a.DB, &newUser)
-	if err != nil {
-		a.Logger.Error("Failed to create user", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+	newUser := models.User{
+		Email:     req.Email,
+		FirstName: req.FirstName,
+		LastName:  req.LastName, PasswordHash: &hashedPassword}
+	if err := db.CreateUser(a.DB, &newUser); err != nil {
+		a.handleError(c, http.StatusInternalServerError, "Failed to create user", err)
 		return
 	}
 
-	// Generate JWT token
 	token, err := a.generateJWT(&newUser)
 	if err != nil {
-		a.Logger.Error("Failed to generate JWT token", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		a.handleError(c, http.StatusInternalServerError, "Failed to generate token", err)
 		return
 	}
 
-	// Set the JWT token as a cookie
 	a.setAuthCookie(c, token)
 
-	a.Logger.Info("User registered successfully", "email", newUser.Email)
-	c.JSON(http.StatusCreated, gin.H{"message": "User registered successfully"})
+	a.Logger.Info("User registered successfully", "email", newUser.Email, "userID", newUser.ID)
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "User registered successfully",
+		"user": gin.H{
+			"email":     newUser.Email,
+			"firstName": newUser.FirstName,
+			"lastName":  newUser.LastName,
+		},
+	})
+}
+
+func (a *AuthController) handleError(c *gin.Context, statusCode int, message string, err error) {
+	a.Logger.Error(message, "error", err)
+	c.JSON(statusCode, gin.H{"error": message})
 }

@@ -5,6 +5,7 @@ import (
 	"wealthscope/backend/internal/controllers/auth"
 	"wealthscope/backend/internal/controllers/bank"
 	"wealthscope/backend/internal/controllers/stock"
+	"wealthscope/backend/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -18,6 +19,8 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 		logger.Error("Failed to initialise AuthController", "error", err)
 		return err
 	}
+
+	middleware := middleware.NewMiddlewareSetup(logger)
 
 	// Initialise Stock Controller instance
 	stockController := stock.NewStockController(logger)
@@ -46,7 +49,16 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 		{
 			bank.POST("/upload", bankController.UploadBankStatement)
 		}
+
 	}
+
+	router.GET("/protected", middleware.AuthMiddleware(authController.JwtToken), func(c *gin.Context) {
+		// Protected route logic
+		user, _ := c.Get("user")
+		c.JSON(200, gin.H{
+			"user": user,
+		})
+	})
 
 	return nil
 }

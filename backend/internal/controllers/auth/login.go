@@ -8,11 +8,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type requestPayload struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 // Login handles user login.
 func (a *AuthController) Login(c *gin.Context) {
-	var loginRequest struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+	loginRequest := &requestPayload{
+		Email:    "",
+		Password: "",
 	}
 
 	// Bind the JSON request body to the loginRequest struct
