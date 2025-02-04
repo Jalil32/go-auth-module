@@ -1,13 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Table } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import Papa from "papaparse";
 import { useState } from "react";
 import GenericPageTemplate from "./GenericPageTemplate";
 
 const UploadBankStatementPage = () => {
-	const [statementData, setStatementData] = useState<string[]>([]);
+	const [statementData, setStatementData] = useState<string[][]>([]);
 
 	const uploadHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -18,7 +18,7 @@ const UploadBankStatementPage = () => {
 			skipEmptyLines: true,
 			complete: (results) => {
 				// TODO: Add success notification here
-				setStatementData(results.data as string[]);
+				setStatementData(results.data as string[][]);
 			},
 		});
 	};
@@ -45,8 +45,27 @@ const UploadBankStatementPage = () => {
 						orientation="horizontal"
 					/>
 				</div>
-				<div className="flex-1">
-					<Table></Table>
+				<div className="flex-1 overflow-auto">
+					<Table>
+						<TableBody>
+							{statementData.map(
+								(row: string[], rowIndex: number) => (
+									<TableRow key={rowIndex}>
+										{row.map(
+											(
+												cell: string,
+												cellIndex: number,
+											) => (
+												<TableCell key={cellIndex}>
+													{cell}
+												</TableCell>
+											),
+										)}
+									</TableRow>
+								),
+							)}
+						</TableBody>
+					</Table>
 				</div>
 			</div>
 		</div>
