@@ -32,7 +32,7 @@ const UploadBankStatementPage = () => {
 	const bankStatementUpload = (
 		<div className="flex flex-1 p-4 pt-0">
 			<div className="flex flex-col md:flex-row flex-1 rounded-xl bg-muted/50 space-y-4 md:space-x-4">
-				<div className="flex flex-col flex-1 space-y-10 m-5">
+				<div className="flex flex-col md:flex-1 space-y-10 m-5">
 					<div className="space-y-2">
 						<h1 className="flex flex-row items-center text-2xl font-semibold">
 							<Upload className="mr-2" /> Upload File
@@ -64,7 +64,7 @@ const UploadBankStatementPage = () => {
 						orientation="horizontal"
 					/>
 				</div>
-				<div className="flex-1 m-5 overflow-auto">
+				<div className="flex-1 m-5">
 					{statementData.length > 0 ? (
 						<Table>
 							<TableBody>
@@ -76,7 +76,10 @@ const UploadBankStatementPage = () => {
 													cell: string,
 													cellIndex: number,
 												) => (
-													<TableCell key={cellIndex}>
+													<TableCell
+														key={cellIndex}
+														className="p-0"
+													>
 														{cell}
 													</TableCell>
 												),
