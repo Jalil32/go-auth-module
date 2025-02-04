@@ -6,12 +6,18 @@ import Papa from "papaparse";
 import { useState } from "react";
 import GenericPageTemplate from "./GenericPageTemplate";
 
+// Supported file types for bank statement upload - Add more as needed in the future
+const SUPPORTED_FILE_TYPES = ["text/csv"];
+
 const UploadBankStatementPage = () => {
 	const [statementData, setStatementData] = useState<string[][]>([]);
 
 	const uploadHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
-		if (!file) return; // TODO: Add error notification here
+		if (!file || !SUPPORTED_FILE_TYPES.includes(file.type)) {
+			// TODO: Add error notification here
+			return;
+		}
 
 		Papa.parse(file, {
 			header: false,
