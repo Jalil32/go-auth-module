@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { Upload } from "lucide-react";
+import { Eye, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { useState } from "react";
 import GenericPageTemplate from "./GenericPageTemplate";
@@ -59,26 +59,35 @@ const UploadBankStatementPage = () => {
 					/>
 				</div>
 				<div className="flex-1 m-5 overflow-auto">
-					<Table>
-						<TableBody>
-							{statementData.map(
-								(row: string[], rowIndex: number) => (
-									<TableRow key={rowIndex}>
-										{row.map(
-											(
-												cell: string,
-												cellIndex: number,
-											) => (
-												<TableCell key={cellIndex}>
-													{cell}
-												</TableCell>
-											),
-										)}
-									</TableRow>
-								),
-							)}
-						</TableBody>
-					</Table>
+					{statementData.length > 0 ? (
+						<Table>
+							<TableBody>
+								{statementData.map(
+									(row: string[], rowIndex: number) => (
+										<TableRow key={rowIndex}>
+											{row.map(
+												(
+													cell: string,
+													cellIndex: number,
+												) => (
+													<TableCell key={cellIndex}>
+														{cell}
+													</TableCell>
+												),
+											)}
+										</TableRow>
+									),
+								)}
+							</TableBody>
+						</Table>
+					) : (
+						<div className="flex flex-col items-center justify-center h-full text-muted">
+							<h1 className="flex flex-row items-center text-2xl font-semibold">
+								<Eye className="mr-2" /> File Preview
+							</h1>
+							<p>Preview of uploaded file will appear here</p>
+						</div>
+					)}
 				</div>
 			</div>
 		</div>
