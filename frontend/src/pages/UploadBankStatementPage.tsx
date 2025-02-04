@@ -9,6 +9,9 @@ import GenericPageTemplate from "./GenericPageTemplate";
 // Supported file types for bank statement upload - Add more as needed in the future
 const SUPPORTED_FILE_TYPES = ["text/csv", "application/vnd.ms-excel"];
 
+// Number of rows to preview from the uploaded file - Too many rows can cause CSS issues
+const NUM_ROWS_TO_PREVIEW = 10;
+
 const UploadBankStatementPage = () => {
 	const [statementData, setStatementData] = useState<string[][]>([]);
 
@@ -22,16 +25,16 @@ const UploadBankStatementPage = () => {
 		Papa.parse(file, {
 			header: false,
 			skipEmptyLines: true,
+			preview: NUM_ROWS_TO_PREVIEW,
 			complete: (results) => {
-				// TODO: Add success notification here
 				setStatementData(results.data as string[][]);
 			},
 		});
 	};
 
 	const bankStatementUpload = (
-		<div className="flex flex-1 p-4 pt-0">
-			<div className="flex flex-col md:flex-row flex-1 rounded-xl bg-muted/50 space-y-4 md:space-x-4 max-h-[90vh]">
+		<div className="flex flex-1 max-h-screen p-4 pt-0">
+			<div className="flex flex-col md:flex-row flex-1 rounded-xl bg-muted/50 space-y-4 md:space-x-4">
 				<div className="flex flex-col md:flex-1 space-y-10 m-5">
 					<div className="space-y-2">
 						<h1 className="flex flex-row items-center text-2xl font-semibold">
@@ -78,7 +81,7 @@ const UploadBankStatementPage = () => {
 												) => (
 													<TableCell
 														key={cellIndex}
-														className="p-0 text-base"
+														className="p-0 md:p-3"
 													>
 														{cell}
 													</TableCell>
