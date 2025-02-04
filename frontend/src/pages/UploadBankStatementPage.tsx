@@ -7,7 +7,7 @@ import { useState } from "react";
 import GenericPageTemplate from "./GenericPageTemplate";
 
 // Supported file types for bank statement upload - Add more as needed in the future
-const SUPPORTED_FILE_TYPES = ["text/csv"];
+const SUPPORTED_FILE_TYPES = ["text/csv", "application/vnd.ms-excel"];
 
 const UploadBankStatementPage = () => {
 	const [statementData, setStatementData] = useState<string[][]>([]);
