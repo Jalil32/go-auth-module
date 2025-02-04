@@ -3,45 +3,53 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChangeEvent, FormEvent, useState } from "react";
-import api from "@/lib/axios.config";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 interface FormData {
-	email: string,
-	firstName: string,
-	lastName: string,
-	password: string,
-	passwordConfirm: string
+	email: string;
+	firstName: string;
+	lastName: string;
+	password: string;
+	passwordConfirm: string;
+}
+
+interface FormErrors {
+	submitError?: string;
+	firstName?: string;
+	lastName?: string;
+	email?: string;
+	password?: string;
+	passwordConfirm?: string;
 }
 
 interface RegisterFormProps extends React.ComponentPropsWithoutRef<"form"> {
 	toggleMode: () => void;
 }
 
-export function RegisterForm({
-	className,
-	toggleMode,
-	...props
-}: RegisterFormProps) {
+export function RegisterForm({ className, toggleMode, ...props }: RegisterFormProps) {
+	const navigate = useNavigate();
 	const [formData, setFormData] = useState<FormData>({
-		email: '',
-		firstName: '',
-		lastName: '',
-		password: '',
-		passwordConfirm: ''
+		email: "",
+		firstName: "",
+		lastName: "",
+		password: "",
+		passwordConfirm: "",
 	});
-
-	const [errors, setErrors] = useState<Partial<FormData>>({});
+	const [errors, setErrors] = useState<FormErrors>({});
 
 	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
-		setFormData({
-			...formData,
-			[name]: value,
-		});
+		setFormData((prev) => ({ ...prev, [name]: value }));
 	};
 
-	const validateForm = () => {
-		const newErrors: Partial<FormData> = {};
+	const handleGoogleAuth = async () => {
+		window.location.href = '/api/auth/google'
+		// will need backend to redirect to custom error page
+	}
+
+	const validateForm = (): boolean => {
+		const newErrors: FormErrors = {};
 
 		if (!formData.email) {
 			newErrors.email = "Email is required";
@@ -49,13 +57,8 @@ export function RegisterForm({
 			newErrors.email = "Email address is invalid";
 		}
 
-		if (!formData.firstName) {
-			newErrors.firstName = "First name is required";
-		}
-
-		if (!formData.lastName) {
-			newErrors.lastName = "Last name is required";
-		}
+		if (!formData.firstName) newErrors.firstName = "First name is required";
+		if (!formData.lastName) newErrors.lastName = "Last name is required";
 
 		if (!formData.password) {
 			newErrors.password = "Password is required";
@@ -75,14 +78,33 @@ export function RegisterForm({
 
 	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		const isValid = validateForm();
-		if (isValid) {
-			// Proceed with form submission
-			console.log("Form data submitted:", formData);
-			api.post('api/auth/login', { formData }).then(res => {
-				console.log(res)
-				console.log(res.data)
-			})
+
+		if (!validateForm()) return;
+
+		try {
+			const res = await axios.post("/api/auth/register", formData);
+			setErrors({}); // Clear previous errors
+
+			if (res.status === 201) {
+				navigate("/dashboard");
+			}
+		} catch (error) {
+			const newErrors: FormErrors = {};
+
+			if (axios.isAxiosError(error)) {
+				newErrors.submitError =
+					error.response?.status === 401
+						? "Invalid email or password"
+						: "Something went wrong. Please try again.";
+				newErrors.submitError =
+					error.response?.status === 409
+						? error.response?.data.error
+						: "Something went wrong. Please try again."
+			} else {
+				newErrors.submitError = "An unexpected error occurred.";
+			}
+
+			setErrors(newErrors);
 		}
 	};
 
@@ -149,6 +171,7 @@ export function RegisterForm({
 					</div>
 					<Input id="confirmPassword" name="passwordConfirm" type="password" onChange={handleChange} required />
 					{errors.passwordConfirm && <span className="text-sm text-red-500">{errors.passwordConfirm}</span>}
+					{errors.submitError && <span className="text-sm text-red-500">{errors.submitError}</span>}
 				</div>
 				<Button type="submit" className="w-full">
 					Signup
@@ -158,7 +181,7 @@ export function RegisterForm({
 						Or continue with
 					</span>
 				</div>
-				<Button type="button" variant="outline" className="w-full">
+				<Button onClick={handleGoogleAuth} type="button" variant="outline" className="w-full">
 					Signup with Google
 				</Button>
 			</div>

@@ -10,18 +10,28 @@ interface LoginFormProps extends React.ComponentPropsWithoutRef<"form"> {
 	toggleMode: () => void;
 }
 
+interface FormErrors {
+	submitError?: string;
+	email?: string;
+	password?: string,
+}
+
 export function LoginForm({
 	className,
 	toggleMode,
 	...props
 }: LoginFormProps) {
 	const navigate = useNavigate()
-	const [errors, setErrors] = useState<{ email?: string; password?: string, submitError?: string }>({});
+	const [errors, setErrors] = useState<FormErrors>({});
 	const [formData, setFormData] = useState({
 		email: '',
 		password: ''
 	});
 
+	const handleGoogleAuth = async () => {
+		window.location.href = '/api/auth/google'
+		// will need backend to redirect to custom error page
+	}
 
 	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
@@ -48,25 +58,36 @@ export function LoginForm({
 		return Object.keys(newErrors).length === 0;
 	};
 
-	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+
+
+	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+
 		const isValid = validateForm();
-		if (isValid) {
-			axios.post('api/auth/login', formData).then(res => {
-				setErrors({})
-				if (res.status == 200) {
-					console.log("Login Successful")
-					navigate('/')
-				}
-			}).catch((error) => {
-				const newErrors: { submitError?: string } = {};
-				if (error.response && error.response.status === 401) {
-					newErrors.submitError = "Invalid email or password"
-					setErrors(newErrors)
+		if (!isValid) return;
+
+		try {
+			const res = await axios.post('/api/auth/login', formData);
+			setErrors({}); // Clear previous errors
+
+			if (res.status === 200) {
+				console.log("Login Successful");
+				navigate('/dashboard');
+			}
+		} catch (error: unknown) {
+			const newErrors: FormErrors = {};
+
+			if (axios.isAxiosError(error)) {
+				if (error.response?.status === 401) {
+					newErrors.submitError = "Invalid email or password";
 				} else {
-					newErrors.submitError = "Something went wrong. Please try again."
+					newErrors.submitError = "Something went wrong. Please try again.";
 				}
-			})
+			} else {
+				newErrors.submitError = "An unexpected error occurred.";
+			}
+
+			setErrors(newErrors);
 		}
 	};
 
@@ -121,7 +142,7 @@ export function LoginForm({
 						Or continue with
 					</span>
 				</div>
-				<Button type="button" variant="outline" className="w-full">
+				<Button onClick={handleGoogleAuth} type="button" variant="outline" className="w-full">
 					Login with Google
 				</Button>
 			</div>
