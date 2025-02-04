@@ -1,6 +1,12 @@
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import {
+	Table,
+	TableBody,
+	TableCaption,
+	TableCell,
+	TableRow,
+} from "@/components/ui/table";
 import { Eye, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { useState } from "react";
@@ -33,7 +39,7 @@ const UploadBankStatementPage = () => {
 	};
 
 	const bankStatementUpload = (
-		<div className="flex flex-1 max-h-screen p-4 pt-0">
+		<div className="flex flex-1 p-4 pt-0">
 			<div className="flex flex-col md:flex-row flex-1 rounded-xl bg-muted/50 space-y-4 md:space-x-4">
 				<div className="flex flex-col md:flex-1 space-y-10 m-5">
 					<div className="space-y-2">
@@ -67,7 +73,7 @@ const UploadBankStatementPage = () => {
 						orientation="horizontal"
 					/>
 				</div>
-				<div className="flex-1 m-5 overflow-auto">
+				<div className="flex-1 m-5">
 					{statementData.length > 0 ? (
 						<Table>
 							<TableBody>
@@ -91,6 +97,9 @@ const UploadBankStatementPage = () => {
 									),
 								)}
 							</TableBody>
+							<TableCaption>
+								Preview of the first {NUM_ROWS_TO_PREVIEW} rows
+							</TableCaption>
 						</Table>
 					) : (
 						<div className="flex flex-col items-center justify-center h-full text-muted">
