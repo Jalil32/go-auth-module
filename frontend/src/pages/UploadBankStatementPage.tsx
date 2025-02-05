@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -5,9 +6,19 @@ import {
 	TableBody,
 	TableCaption,
 	TableCell,
+	TableHead,
+	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { Eye, Upload } from "lucide-react";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
+import { ChevronDown, Eye, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { useState } from "react";
 import GenericPageTemplate from "./GenericPageTemplate";
@@ -18,8 +29,18 @@ const SUPPORTED_FILE_TYPES = ["text/csv", "application/vnd.ms-excel"];
 // Number of rows to preview from the uploaded file - Too many rows can cause CSS issues
 const NUM_ROWS_TO_PREVIEW = 10;
 
+// Header options for the bank statement upload table
+const HEADER_OPTIONS = {
+	DATE: "Date",
+	DESCRIPTION: "Description",
+	AMOUNT: "Amount",
+};
+
 const UploadBankStatementPage = () => {
 	const [statementData, setStatementData] = useState<string[][]>([]);
+	const [selectedHeaders, setSelectedHeaders] = useState<{
+		[key: number]: string;
+	}>({});
 
 	const uploadHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -76,6 +97,53 @@ const UploadBankStatementPage = () => {
 				<div className="flex-1 m-5">
 					{statementData.length > 0 ? (
 						<Table>
+							<TableHeader>
+								<TableRow>
+									{statementData[0].map((_, index) => (
+										<TableHead key={index}>
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button variant="ghost">
+														<ChevronDown />
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent>
+													<DropdownMenuRadioGroup>
+														{Object.values(
+															HEADER_OPTIONS,
+														).map(
+															(
+																option: string,
+															) => (
+																<DropdownMenuRadioItem
+																	key={option}
+																	value={
+																		option
+																	}
+																>
+																	<DropdownMenuItem
+																		onSelect={() =>
+																			setSelectedHeaders(
+																				{
+																					...selectedHeaders,
+																					[index]:
+																						option,
+																				},
+																			)
+																		}
+																	>
+																		{option}
+																	</DropdownMenuItem>
+																</DropdownMenuRadioItem>
+															),
+														)}
+													</DropdownMenuRadioGroup>
+												</DropdownMenuContent>
+											</DropdownMenu>
+										</TableHead>
+									))}
+								</TableRow>
+							</TableHeader>
 							<TableBody>
 								{statementData.map(
 									(row: string[], rowIndex: number) => (
