@@ -126,32 +126,26 @@ const UploadBankStatementPage = () => {
 													<DropdownMenuRadioGroup>
 														{Object.values(
 															HEADER_OPTIONS,
-														).map(
-															(
-																option: string,
-															) => (
-																<DropdownMenuRadioItem
-																	key={option}
-																	value={
-																		option
+														).map((option) => (
+															<DropdownMenuRadioItem
+																key={option}
+																value={option}
+															>
+																<DropdownMenuItem
+																	onSelect={() =>
+																		setSelectedHeaders(
+																			{
+																				...selectedHeaders,
+																				[index]:
+																					option,
+																			},
+																		)
 																	}
 																>
-																	<DropdownMenuItem
-																		onSelect={() =>
-																			setSelectedHeaders(
-																				{
-																					...selectedHeaders,
-																					[index]:
-																						option,
-																				},
-																			)
-																		}
-																	>
-																		{option}
-																	</DropdownMenuItem>
-																</DropdownMenuRadioItem>
-															),
-														)}
+																	{option}
+																</DropdownMenuItem>
+															</DropdownMenuRadioItem>
+														))}
 													</DropdownMenuRadioGroup>
 												</DropdownMenuContent>
 											</DropdownMenu>
@@ -160,22 +154,15 @@ const UploadBankStatementPage = () => {
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{statementData.map(
-									(row: string[], rowIndex: number) => (
-										<TableRow key={rowIndex}>
-											{row.map(
-												(
-													cell: string,
-													cellIndex: number,
-												) => (
-													<TableCell key={cellIndex}>
-														{cell}
-													</TableCell>
-												),
-											)}
-										</TableRow>
-									),
-								)}
+								{statementData.map((row, rowIndex) => (
+									<TableRow key={rowIndex}>
+										{row.map((cell, cellIndex) => (
+											<TableCell key={cellIndex}>
+												{cell}
+											</TableCell>
+										))}
+									</TableRow>
+								))}
 							</TableBody>
 							<TableCaption>
 								Preview of the first {NUM_ROWS_TO_PREVIEW} rows
@@ -209,8 +196,8 @@ const UploadBankStatementPage = () => {
 									</TableHeader>
 									<TableBody>
 										{SAMPLE_STATEMENT_DATA.map(
-											(statement) => (
-												<TableRow key={statement.DATE}>
+											(statement, index) => (
+												<TableRow key={index}>
 													<TableCell>
 														{statement.DATE}
 													</TableCell>
