@@ -27,7 +27,7 @@ import GenericPageTemplate from "./GenericPageTemplate";
 const SUPPORTED_FILE_TYPES = ["text/csv", "application/vnd.ms-excel"];
 
 // Number of rows to preview from the uploaded file - Too many rows can cause CSS issues
-const NUM_ROWS_TO_PREVIEW = 10;
+const NUM_ROWS_TO_PREVIEW = 5;
 
 // Header options for the bank statement upload table
 const HEADER_OPTIONS = {
@@ -158,7 +158,10 @@ const UploadBankStatementPage = () => {
 								{statementData.map((row, rowIndex) => (
 									<TableRow key={rowIndex}>
 										{row.map((cell, cellIndex) => (
-											<TableCell key={cellIndex}>
+											<TableCell
+												key={cellIndex}
+												className="p-0 md:p-3"
+											>
 												{cell}
 											</TableCell>
 										))}
@@ -199,13 +202,13 @@ const UploadBankStatementPage = () => {
 										{SAMPLE_STATEMENT_DATA.map(
 											(statement, index) => (
 												<TableRow key={index}>
-													<TableCell>
+													<TableCell className="p-0 md:p-3">
 														{statement.DATE}
 													</TableCell>
-													<TableCell>
+													<TableCell className="p-0 md:p-3">
 														{statement.AMOUNT}
 													</TableCell>
-													<TableCell>
+													<TableCell className="p-0 md:p-3">
 														{statement.DESCRIPTION}
 													</TableCell>
 												</TableRow>
