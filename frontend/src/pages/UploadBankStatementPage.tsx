@@ -36,6 +36,27 @@ const HEADER_OPTIONS = {
 	AMOUNT: "Amount",
 };
 
+// Sample statement data to show users what the uploaded file should look like
+const SAMPLE_STATEMENT_DATA = [
+	{
+		DATE: "30/01/2025",
+		AMOUNT: -39.93,
+		DESCRIPTION: "Purchase at Starbucks",
+	},
+	{
+		DATE: "1/02/2025",
+		AMOUNT: 100,
+		DESCRIPTION: "Freelance Project Payment",
+	},
+	{
+		DATE: "3/02/2025",
+		AMOUNT: -22.75,
+		DESCRIPTION: "Grocery Store Purchase",
+	},
+	{ DATE: "5/02/2025", AMOUNT: -19.99, DESCRIPTION: "Netflix Subscription" },
+	{ DATE: "7/02/2025", AMOUNT: -15.4, DESCRIPTION: "Fast Food Order" },
+];
+
 const UploadBankStatementPage = () => {
 	const [statementData, setStatementData] = useState<string[][]>([]);
 	const [selectedHeaders, setSelectedHeaders] = useState<{
@@ -61,8 +82,8 @@ const UploadBankStatementPage = () => {
 
 	const bankStatementUpload = (
 		<div className="flex flex-1 p-4 pt-0">
-			<div className="flex flex-col md:flex-row flex-1 rounded-xl bg-muted/50 space-y-4 md:space-x-4">
-				<div className="flex flex-col md:flex-1 space-y-10 m-5">
+			<div className="flex flex-col flex-1 rounded-xl bg-muted/50 space-y-4">
+				<div className="flex flex-col space-y-10 m-5">
 					<div className="space-y-2">
 						<h1 className="flex flex-row items-center text-2xl font-semibold">
 							<Upload className="mr-2" /> Upload File
@@ -72,25 +93,19 @@ const UploadBankStatementPage = () => {
 							transactions
 						</p>
 					</div>
-					<div>
+					<div className="flex flex-col items-center justify-center space-y-2">
 						<Input
 							id="csv"
 							type="file"
 							accept=".csv"
 							onChange={uploadHandler}
 						/>
-						<p className="text-xs text-center">
-							Supported file types: .csv
-						</p>
+						<p className="text-xs">Supported file types: .csv</p>
 					</div>
 				</div>
 				<div className="flex items-center justify-center">
 					<Separator
-						className="hidden md:block h-[95%] border-muted/50"
-						orientation="vertical"
-					/>
-					<Separator
-						className="block md:hidden w-[95%] border-muted/50"
+						className="w-[95%] border-muted/50"
 						orientation="horizontal"
 					/>
 				</div>
@@ -153,10 +168,7 @@ const UploadBankStatementPage = () => {
 													cell: string,
 													cellIndex: number,
 												) => (
-													<TableCell
-														key={cellIndex}
-														className="p-0 md:p-3"
-													>
+													<TableCell key={cellIndex}>
 														{cell}
 													</TableCell>
 												),
@@ -170,11 +182,50 @@ const UploadBankStatementPage = () => {
 							</TableCaption>
 						</Table>
 					) : (
-						<div className="flex flex-col items-center justify-center h-full text-muted">
-							<h1 className="flex flex-row items-center text-2xl font-semibold">
-								<Eye className="mr-2" /> File Preview
-							</h1>
-							<p>Preview of uploaded file will appear here</p>
+						<div className="flex flex-col justify-center items-center h-full text-muted space-y-4">
+							<div className="flex flex-col justify-center items-center space-y-2">
+								<h1 className="flex flex-row items-center text-2xl font-semibold">
+									<Eye className="mr-2" /> File Preview
+								</h1>
+								<p>Preview of uploaded file will appear here</p>
+							</div>
+							<div>
+								<Table>
+									<TableCaption className="text-muted">
+										Sample Statement Data
+									</TableCaption>
+									<TableHeader>
+										<TableRow>
+											<TableHead className="text-muted">
+												{HEADER_OPTIONS.DATE}
+											</TableHead>
+											<TableHead className="text-muted">
+												{HEADER_OPTIONS.AMOUNT}
+											</TableHead>
+											<TableHead className="text-muted">
+												{HEADER_OPTIONS.DESCRIPTION}
+											</TableHead>
+										</TableRow>
+									</TableHeader>
+									<TableBody>
+										{SAMPLE_STATEMENT_DATA.map(
+											(statement) => (
+												<TableRow key={statement.DATE}>
+													<TableCell>
+														{statement.DATE}
+													</TableCell>
+													<TableCell>
+														{statement.AMOUNT}
+													</TableCell>
+													<TableCell>
+														{statement.DESCRIPTION}
+													</TableCell>
+												</TableRow>
+											),
+										)}
+									</TableBody>
+								</Table>
+							</div>
 						</div>
 					)}
 				</div>
