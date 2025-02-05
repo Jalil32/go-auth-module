@@ -99,6 +99,7 @@ const UploadBankStatementPage = () => {
 							type="file"
 							accept=".csv"
 							onChange={uploadHandler}
+							className="max-w-lg"
 						/>
 						<p className="text-xs">Supported file types: .csv</p>
 					</div>
