@@ -89,5 +89,6 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 	// Set the JWT token as a cookie
 	a.setAuthCookie(c, token)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+	// Redirect to the /dashboard page
+	c.Redirect(http.StatusFound, "http://localhost:5173/dashboard")
 }
