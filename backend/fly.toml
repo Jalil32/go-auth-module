@@ -1,32 +1,23 @@
-# fly.toml app configuration file generated for wealthscope-client on 2025-02-08T19:11:25+08:00
+# fly.toml app configuration file generated for wealthscope-api on 2025-02-08T18:30:37+08:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'wealthscope-client'
+app = 'wealthscope-api'
 primary_region = 'sin'
 
 [build]
 
+[env]
+  PORT = '3000'
+
 [http_service]
-  internal_port = 80
+  internal_port = 3000
   force_https = true
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
   processes = ['app']
-
-[[services]]
-  protocol = 'tcp'
-  internal_port = 80
-
-  [[services.ports]]
-    port = 80
-    handlers = ['http']
-
-  [[services.ports]]
-    port = 443
-    handlers = ['tls', 'http']
 
 [[vm]]
   memory = '1gb'

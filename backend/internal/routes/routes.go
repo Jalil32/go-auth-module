@@ -46,6 +46,13 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 		{
 			bank.POST("/upload", bankController.UploadBankStatement)
 		}
+
+		// test endpoint, remove after use
+		api.GET("/test", func(context *gin.Context) {
+			context.JSON(200, gin.H{
+				"message": "hello from backend test endpoint",
+			})
+		})
 	}
 
 	return nil
