@@ -59,6 +59,8 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 	}
 
 	// Create a new user if not found
+	tx, err := a.DB.Beginx()
+
 	var user *models.User
 	if existingUser == nil {
 		newUser := models.User{
@@ -67,7 +69,7 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 			LastName:  oauthUser.LastName,
 			Provider:  &oauthUser.Provider,
 		}
-		err := db.CreateUser(a.DB, &newUser)
+		err := db.CreateUser(tx, &newUser)
 		if err != nil {
 			a.Logger.Error("Failed to create user", "error", err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create user: %v", err)})
@@ -81,14 +83,17 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 	// Generate JWT token
 	token, err := a.generateJWT(user)
 	if err != nil {
+		tx.Rollback()
 		a.Logger.Error("Failed to generate JWT token", "error", err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to generate token: %v", err)})
 		return
 	}
 
+	tx.Commit()
+
 	// Set the JWT token as a cookie
 	a.setAuthCookie(c, token)
 
 	// Redirect to the /dashboard page
-	c.Redirect(http.StatusFound, "http://localhost:5173/dashboard")
+	c.Redirect(http.StatusFound, a.FrontendAddress+"/auth/otp")
 }

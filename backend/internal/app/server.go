@@ -10,9 +10,10 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
+	"github.com/redis/go-redis/v9"
 )
 
-func StartServer(cfg *config.Config, db *sqlx.DB, logger *slog.Logger) error {
+func StartServer(cfg *config.Config, db *sqlx.DB, rdb *redis.Client, logger *slog.Logger) error {
 
 	// Setup OAuth providers
 	goth.UseProviders(
@@ -30,11 +31,11 @@ func StartServer(cfg *config.Config, db *sqlx.DB, logger *slog.Logger) error {
 	router.Use(CustomLogger(logger))
 
 	// Register routes
-	routes.Routes(router, db, logger)
+	routes.Routes(router, db, rdb, logger)
 
 	// Start the server
-	logger.Info("Starting Server", "port", cfg.Port)
-	err := router.Run((":" + cfg.Port))
+	logger.Info("Starting Server", "port", cfg.Backend.Port)
+	err := router.Run((cfg.Backend.IP + ":" + cfg.Backend.Port))
 
 	return err
 }

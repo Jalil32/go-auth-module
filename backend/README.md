@@ -18,16 +18,16 @@ Creating a new migration:
 
 Running all migrations:
 ```
-export $(cat .env | xargs)  # Load environment variables from .env file
+export $(cat .env | xargs)
 goose -dir ./migrations postgres "user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_NAME host=$POSTGRES_HOST port=$POSTGRES_PORT sslmode=$POSTGRES_SSL_MODE" up
 
 ```
 
 Rolling back the last migrations:
 ```
-export $(cat .env | xargs)  # Load environment variables from .env file
-
+export $(cat .env | xargs)
 goose -dir ./migrations postgres "user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_NAME host=$POSTGRES_HOST port=$POSTGRES_PORT sslmode=$POSTGRES_SSL_MODE" down
+
 ```
 
 ### Start Dev Database

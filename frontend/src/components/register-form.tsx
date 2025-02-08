@@ -124,7 +124,7 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 						id="firstName"
 						type="text"
 						name="firstName"
-						placeholder="Jason"
+						placeholder="John"
 						onChange={handleChange}
 						required
 					/>
@@ -137,7 +137,7 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 						id="lastName"
 						type="text"
 						name="lastName"
-						placeholder="Millman"
+						placeholder="Doe"
 						onChange={handleChange}
 						required
 					/>
@@ -150,7 +150,7 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 						id="email"
 						type="email"
 						name="email"
-						placeholder="jasonrmillman@gmail.com"
+						placeholder="ws@gmail.com"
 						onChange={handleChange}
 						required
 					/>

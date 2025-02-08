@@ -9,11 +9,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 )
 
-func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
+func Routes(router *gin.Engine, db *sqlx.DB, rdb *redis.Client, logger *slog.Logger) error {
 	// Initialise Auth Controller instance
-	authController, err := auth.NewAuthController(db, logger)
+	authController, err := auth.NewAuthController(db, rdb, logger)
 
 	if err != nil {
 		logger.Error("Failed to initialise AuthController", "error", err)
@@ -38,6 +39,7 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 			auth.POST("/logout", authController.Logout)
 			auth.GET("/:provider", authController.SignInWithProvider)
 			auth.GET("/:provider/callback", authController.CallbackHandler)
+			auth.POST("/verify", authController.VerifyOTPHandler)
 		}
 
 		stock := api.Group("/stock")

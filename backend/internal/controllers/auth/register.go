@@ -16,12 +16,14 @@ type RegisterRequest struct {
 }
 
 func (a *AuthController) Register(c *gin.Context) {
+	// 1) Unmarshal request body into request struct
 	var req RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		a.handleError(c, http.StatusBadRequest, "Invalid request payload", err)
 		return
 	}
 
+	// 2) Check if user exists already
 	existingUser, err := db.FindUserByEmail(a.DB, req.Email)
 	if err != nil {
 		a.handleError(c, http.StatusInternalServerError, "Database error during user lookup", err)
@@ -33,30 +35,41 @@ func (a *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	hashedPassword, err := hashPassword(req.Password)
+	// 3) If user does not exist hash password and create new user
+	hashedPassword, err := a.hashPassword(req.Password)
 	if err != nil {
 		a.handleError(c, http.StatusInternalServerError, "Failed to hash password", err)
 		return
 	}
 
 	newUser := models.User{
-		Email:     req.Email,
-		FirstName: req.FirstName,
-		LastName:  req.LastName, PasswordHash: &hashedPassword}
-	if err := db.CreateUser(a.DB, &newUser); err != nil {
+		Email:        req.Email,
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		PasswordHash: &hashedPassword,
+	}
+
+	// 4)  Start transaction
+	tx, err := a.DB.Beginx()
+
+	if err := db.CreateUser(tx, &newUser); err != nil {
+		tx.Rollback()
 		a.handleError(c, http.StatusInternalServerError, "Failed to create user", err)
 		return
 	}
 
-	token, err := a.generateJWT(&newUser)
+	// 5) Send OTP to new users email, if this fails we rollback the transaction
+	err = a.sendOTP(newUser.Email)
 	if err != nil {
-		a.handleError(c, http.StatusInternalServerError, "Failed to generate token", err)
+		tx.Rollback()
+		a.handleError(c, http.StatusInternalServerError, "Failed to send otp", err)
 		return
 	}
 
-	a.setAuthCookie(c, token)
+	// 6) Commit the user and send back success
+	tx.Commit()
 
-	a.Logger.Info("User registered successfully", "email", newUser.Email, "userID", newUser.ID)
+	a.Logger.Info("User registered successfully and otp send", "email", newUser.Email, "userID", newUser.ID)
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User registered successfully",
 		"user": gin.H{

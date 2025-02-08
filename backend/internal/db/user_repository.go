@@ -26,7 +26,7 @@ func FindUserByEmail(db *sqlx.DB, email string) (*models.User, error) {
 	return &user, nil
 }
 
-func CreateUser(db *sqlx.DB, user *models.User) error {
+func CreateUser(db *sqlx.Tx, user *models.User) error {
 	// Validate email/password users
 	if user.Provider == nil && user.PasswordHash == nil {
 		return fmt.Errorf("password_hash is required for email/password users")
@@ -45,6 +45,36 @@ func CreateUser(db *sqlx.DB, user *models.User) error {
 	)
 	if err != nil {
 		return fmt.Errorf("failed to insert user: %w", err)
+	}
+	return nil
+}
+
+// UpdateUser updates an existing user in the database.
+func UpdateUser(db *sqlx.Tx, user *models.User) error {
+	query := `UPDATE users 
+              SET email = $1, 
+                  first_name = $2, 
+                  last_name = $3, 
+                  provider = $4, 
+                  password_hash = $5, 
+				  is_active = $6,
+				  verified = $7
+				  
+              WHERE id = $8`
+
+	_, err := db.Exec(
+		query,
+		user.Email,
+		user.FirstName,
+		user.LastName,
+		user.Provider,
+		user.PasswordHash,
+		user.IsActive,
+		user.Verified,
+		user.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
 	}
 	return nil
 }

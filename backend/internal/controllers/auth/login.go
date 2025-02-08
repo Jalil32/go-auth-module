@@ -55,6 +55,28 @@ func (a *AuthController) Login(c *gin.Context) {
 		return
 	}
 
+	// If user is not verified
+
+	// 5) Send OTP to new users email, if this fails we rollback the transaction
+	if !user.Verified {
+		err = a.sendOTP(user.Email)
+		if err != nil {
+			a.handleError(c, http.StatusInternalServerError, "Failed to send otp", err)
+			return
+		}
+
+		a.Logger.Info("User registered successfully and otp send", "email", user.Email, "userID", user.ID)
+		c.JSON(http.StatusOK, gin.H{
+			"message": "User is not verified.",
+			"user": gin.H{
+				"email":     user.Email,
+				"firstName": user.FirstName,
+				"lastName":  user.LastName,
+			},
+		})
+		return
+	}
+
 	// Generate JWT token
 	token, err := a.generateJWT(user)
 	if err != nil {

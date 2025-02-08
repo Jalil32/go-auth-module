@@ -13,10 +13,23 @@ import (
 )
 
 type Config struct {
-	Port  string
-	DB    PostgresConfig
-	OAuth OAuthConfig
-	JWT   JWTConfig
+	Backend  BackendConfig
+	Frontend FrontendConfig
+	SMTP     SMTPConfig
+	DB       PostgresConfig
+	OAuth    OAuthConfig
+	JWT      JWTConfig
+	Redis    RedisConfig
+}
+
+type BackendConfig struct {
+	Port string
+	IP   string
+}
+
+type FrontendConfig struct {
+	Port string
+	IP   string
 }
 
 type PostgresConfig struct {
@@ -39,10 +52,30 @@ type JWTConfig struct {
 	Expiry string
 }
 
+type SMTPConfig struct {
+	Host     string
+	Port     string
+	Username string
+	Password string
+}
+
+type RedisConfig struct {
+	Address  string
+	Database string
+	Password string
+}
+
 func LoadConfig() (*Config, error) {
 
 	cfg := &Config{
-		Port: os.Getenv("PORT"),
+		Frontend: FrontendConfig{
+			IP:   os.Getenv("FRONTEND_IP"),
+			Port: os.Getenv("FRONTEND_PORT"),
+		},
+		Backend: BackendConfig{
+			IP:   os.Getenv("BACKEND_IP"),
+			Port: os.Getenv("BACKEND_PORT"),
+		},
 		DB: PostgresConfig{
 			User:     os.Getenv("POSTGRES_USER"),
 			Name:     os.Getenv("POSTGRES_NAME"),
@@ -59,6 +92,17 @@ func LoadConfig() (*Config, error) {
 		JWT: JWTConfig{
 			Token:  os.Getenv("JWT_TOKEN"),
 			Expiry: os.Getenv("JWT_EXPIRY"),
+		},
+		SMTP: SMTPConfig{
+			Host:     os.Getenv("EMAIL_HOST"),
+			Port:     os.Getenv("EMAIL_PORT"),
+			Username: os.Getenv("EMAIL_USERNAME"),
+			Password: os.Getenv("EMAIL_PASSWORD"),
+		},
+		Redis: RedisConfig{
+			Address:  os.Getenv("REDIS_ADDRESS"),
+			Database: os.Getenv("REDIS_DATABASE"),
+			Password: os.Getenv("REDIS_PASSWORD"),
 		},
 	}
 
