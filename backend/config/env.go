@@ -17,6 +17,9 @@ type Config struct {
 	DB    PostgresConfig
 	OAuth OAuthConfig
 	JWT   JWTConfig
+	ClientLocal string
+	ClientProxy string
+	ClientFly string
 }
 
 type PostgresConfig struct {
@@ -43,6 +46,9 @@ func LoadConfig() (*Config, error) {
 
 	cfg := &Config{
 		Port: os.Getenv("PORT"),
+		ClientLocal: os.Getenv("CLIENT_LOCAL"),
+		ClientProxy: os.Getenv("CLIENT_PROXY"),
+		ClientFly: os.Getenv("CLIENT_FLY"),
 		DB: PostgresConfig{
 			User:     os.Getenv("POSTGRES_USER"),
 			Name:     os.Getenv("POSTGRES_NAME"),
