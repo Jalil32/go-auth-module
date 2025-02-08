@@ -66,7 +66,6 @@ type RedisConfig struct {
 }
 
 func LoadConfig() (*Config, error) {
-
 	cfg := &Config{
 		Frontend: FrontendConfig{
 			IP:   os.Getenv("FRONTEND_IP"),

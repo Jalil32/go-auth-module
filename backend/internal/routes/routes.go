@@ -2,6 +2,7 @@ package routes
 
 import (
 	"log/slog"
+	"wealthscope/backend/config"
 	"wealthscope/backend/internal/controllers/auth"
 	"wealthscope/backend/internal/controllers/bank"
 	"wealthscope/backend/internal/controllers/stock"
@@ -13,12 +14,13 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func Routes(router *gin.Engine, database *sqlx.DB, rdb *redis.Client, logger *slog.Logger) error {
+func Routes(router *gin.Engine, database *sqlx.DB, rdb *redis.Client, logger *slog.Logger, cfg *config.Config) error {
 	// Create user database
 	userDB := &db.UserDB{DB: database}
+	jwtService := &auth.JWTService{SecretKey: cfg.JWT.Token}
 
 	// Initialise Auth Controller instance
-	authController, err := auth.NewAuthController(userDB, rdb, logger)
+	authController, err := auth.NewAuthController(userDB, rdb, logger, jwtService, cfg)
 
 	if err != nil {
 		logger.Error("Failed to initialise AuthController", "error", err)

@@ -4,25 +4,35 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type requestPayload struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+}
+
+// Validate validates the requestPayload using the validator
+func (rp *requestPayload) Validate() error {
+	validate := validator.New()
+	return validate.Struct(rp)
 }
 
 // Login handles user login.
 func (a *AuthController) Login(c *gin.Context) {
-	loginRequest := &requestPayload{
-		Email:    "",
-		Password: "",
-	}
+	var loginRequest requestPayload
 
 	// Bind the JSON request body to the loginRequest struct
 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
 		a.Logger.Error("Failed to bind JSON", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	// Validate the requestPayload
+	if err := loginRequest.Validate(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input", "details": err.Error()})
 		return
 	}
 
@@ -62,7 +72,7 @@ func (a *AuthController) Login(c *gin.Context) {
 			return
 		}
 
-		a.Logger.Info("User registered successfully and otp send", "email", user.Email, "userID", user.ID)
+		a.Logger.Info("User not verified. otp has been sent.", "email", user.Email, "userID", user.ID)
 		c.JSON(http.StatusOK, gin.H{
 			"message": "User is not verified.",
 			"user": gin.H{
@@ -75,7 +85,7 @@ func (a *AuthController) Login(c *gin.Context) {
 	}
 
 	// Generate JWT token
-	token, err := a.generateJWT(user)
+	token, err := a.JWTGenerator.GenerateJWT(user)
 	if err != nil {
 		a.Logger.Error("Failed to generate JWT token", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})

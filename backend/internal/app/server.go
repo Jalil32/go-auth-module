@@ -31,7 +31,7 @@ func StartServer(cfg *config.Config, db *sqlx.DB, rdb *redis.Client, logger *slo
 	router.Use(CustomLogger(logger))
 
 	// Register routes
-	routes.Routes(router, db, rdb, logger)
+	routes.Routes(router, db, rdb, logger, cfg)
 
 	// Start the server
 	logger.Info("Starting Server", "port", cfg.Backend.Port)

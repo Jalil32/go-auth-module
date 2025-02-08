@@ -89,5 +89,5 @@ func (a *AuthController) Register(c *gin.Context) {
 
 func (a *AuthController) handleError(c *gin.Context, statusCode int, message string, err error) {
 	a.Logger.Error(message, "error", err)
-	c.JSON(statusCode, gin.H{"error": message})
+	c.JSON(statusCode, gin.H{"message": message})
 }

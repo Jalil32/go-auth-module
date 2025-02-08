@@ -61,7 +61,7 @@ func (a *AuthController) VerifyOTPHandler(c *gin.Context) {
 		return
 	}
 
-	token, err := a.generateJWT(existingUser)
+	token, err := a.JWTGenerator.GenerateJWT(existingUser)
 	if err != nil {
 		a.handleError(c, http.StatusInternalServerError, "Failed to generate token", err)
 		return

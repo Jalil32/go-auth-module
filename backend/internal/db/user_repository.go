@@ -8,18 +8,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type UserRepository interface {
-	FindUserByEmail(string) (*models.User, error)
-	CreateUser(*models.User) error
-	UpdateUser(user *models.User) error
-}
-
 type UserDB struct {
 	*sqlx.DB
-}
-
-type UserTX struct {
-	*sqlx.Tx
 }
 
 func (db *UserDB) FindUserByEmail(email string) (*models.User, error) {
@@ -69,8 +59,8 @@ func (db *UserDB) UpdateUser(ext sqlx.Ext, user *models.User) error {
                   last_name = $3, 
                   provider = $4, 
                   password_hash = $5, 
-				  is_active = $6,
-				  verified = $7
+                  is_active = $6,
+                  verified = $7
               WHERE id = $8`
 
 	_, err := ext.Exec(
@@ -88,4 +78,8 @@ func (db *UserDB) UpdateUser(ext sqlx.Ext, user *models.User) error {
 		return fmt.Errorf("failed to update user: %w", err)
 	}
 	return nil
+}
+
+func (db *UserDB) Beginx() (*sqlx.Tx, error) {
+	return db.DB.Beginx()
 }

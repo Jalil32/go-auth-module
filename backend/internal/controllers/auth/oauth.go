@@ -93,7 +93,7 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 	}
 
 	// Generate JWT token
-	token, err := a.generateJWT(user)
+	token, err := a.JWTGenerator.GenerateJWT(user)
 	if err != nil {
 		a.Logger.Error("Failed to generate JWT token", "error", err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to generate token: %v", err)})
