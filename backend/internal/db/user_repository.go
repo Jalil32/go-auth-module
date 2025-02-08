@@ -8,7 +8,21 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func FindUserByEmail(db *sqlx.DB, email string) (*models.User, error) {
+type UserRepository interface {
+	FindUserByEmail(string) (*models.User, error)
+	CreateUser(*models.User) error
+	UpdateUser(user *models.User) error
+}
+
+type UserDB struct {
+	*sqlx.DB
+}
+
+type UserTX struct {
+	*sqlx.Tx
+}
+
+func (db *UserDB) FindUserByEmail(email string) (*models.User, error) {
 	query := `SELECT * FROM users WHERE email=$1`
 
 	var user models.User
@@ -26,8 +40,7 @@ func FindUserByEmail(db *sqlx.DB, email string) (*models.User, error) {
 	return &user, nil
 }
 
-func CreateUser(db *sqlx.Tx, user *models.User) error {
-	// Validate email/password users
+func (db *UserDB) CreateUser(ext sqlx.Ext, user *models.User) error {
 	if user.Provider == nil && user.PasswordHash == nil {
 		return fmt.Errorf("password_hash is required for email/password users")
 	}
@@ -35,7 +48,7 @@ func CreateUser(db *sqlx.Tx, user *models.User) error {
 	query := `INSERT INTO users (email, first_name, last_name, provider, password_hash)
               VALUES ($1, $2, $3, $4, $5)`
 
-	_, err := db.Exec(
+	_, err := ext.Exec(
 		query,
 		user.Email,
 		user.FirstName,
@@ -49,8 +62,7 @@ func CreateUser(db *sqlx.Tx, user *models.User) error {
 	return nil
 }
 
-// UpdateUser updates an existing user in the database.
-func UpdateUser(db *sqlx.Tx, user *models.User) error {
+func (db *UserDB) UpdateUser(ext sqlx.Ext, user *models.User) error {
 	query := `UPDATE users 
               SET email = $1, 
                   first_name = $2, 
@@ -59,10 +71,9 @@ func UpdateUser(db *sqlx.Tx, user *models.User) error {
                   password_hash = $5, 
 				  is_active = $6,
 				  verified = $7
-				  
               WHERE id = $8`
 
-	_, err := db.Exec(
+	_, err := ext.Exec(
 		query,
 		user.Email,
 		user.FirstName,

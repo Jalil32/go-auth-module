@@ -2,7 +2,6 @@ package auth
 
 import (
 	"net/http"
-	"wealthscope/backend/internal/db"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,31 +32,46 @@ func (a *AuthController) VerifyOTPHandler(c *gin.Context) {
 	}
 
 	// 4) If correct fetch user
-	existingUser, err := db.FindUserByEmail(a.DB, otpRequest.Email)
+	existingUser, err := a.UserDB.FindUserByEmail(otpRequest.Email)
 	if err != nil {
 		a.handleError(c, http.StatusInternalServerError, "Database error during user lookup", err)
 		return
 	}
 
 	// 5) Update user to be verified
-	tx, err := a.DB.Beginx()
+	tx, err := a.UserDB.Beginx()
+	if err != nil {
+		a.handleError(c, http.StatusInternalServerError, "Failed to start transaction", err)
+		return
+	}
+
+	// Defer rollback in case of failure
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				a.Logger.Error("Failed to rollback transaction", "error", err)
+			}
+		}
+	}()
 
 	existingUser.Verified = true
 
-	if err := db.UpdateUser(tx, existingUser); err != nil {
-		tx.Rollback()
+	if err := a.UserDB.UpdateUser(tx, existingUser); err != nil {
 		a.handleError(c, http.StatusInternalServerError, "Failed to update user", err)
 		return
 	}
 
 	token, err := a.generateJWT(existingUser)
 	if err != nil {
-		tx.Rollback()
 		a.handleError(c, http.StatusInternalServerError, "Failed to generate token", err)
 		return
 	}
 
-	tx.Commit()
+	// 7) Commit the transaction
+	if err := tx.Commit(); err != nil {
+		a.handleError(c, http.StatusInternalServerError, "Failed to commit transaction", err)
+		return
+	}
 
 	a.setAuthCookie(c, token)
 

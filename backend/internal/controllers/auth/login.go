@@ -2,7 +2,6 @@ package auth
 
 import (
 	"net/http"
-	"wealthscope/backend/internal/db"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -28,7 +27,7 @@ func (a *AuthController) Login(c *gin.Context) {
 	}
 
 	// Find the user by email
-	user, err := db.FindUserByEmail(a.DB, loginRequest.Email)
+	user, err := a.UserDB.FindUserByEmail(loginRequest.Email)
 	if err != nil {
 		a.Logger.Error("Database error during user lookup", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error during user lookup"})
@@ -54,8 +53,6 @@ func (a *AuthController) Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
-
-	// If user is not verified
 
 	// 5) Send OTP to new users email, if this fails we rollback the transaction
 	if !user.Verified {

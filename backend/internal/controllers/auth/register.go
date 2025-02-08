@@ -2,7 +2,6 @@ package auth
 
 import (
 	"net/http"
-	"wealthscope/backend/internal/db"
 	"wealthscope/backend/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -24,7 +23,7 @@ func (a *AuthController) Register(c *gin.Context) {
 	}
 
 	// 2) Check if user exists already
-	existingUser, err := db.FindUserByEmail(a.DB, req.Email)
+	existingUser, err := a.UserDB.FindUserByEmail(req.Email)
 	if err != nil {
 		a.handleError(c, http.StatusInternalServerError, "Database error during user lookup", err)
 		return
@@ -35,13 +34,14 @@ func (a *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	// 3) If user does not exist hash password and create new user
+	// 3) Hash password
 	hashedPassword, err := a.hashPassword(req.Password)
 	if err != nil {
 		a.handleError(c, http.StatusInternalServerError, "Failed to hash password", err)
 		return
 	}
 
+	// 4) Create new user
 	newUser := models.User{
 		Email:        req.Email,
 		FirstName:    req.FirstName,
@@ -49,35 +49,42 @@ func (a *AuthController) Register(c *gin.Context) {
 		PasswordHash: &hashedPassword,
 	}
 
-	// 4)  Start transaction
-	tx, err := a.DB.Beginx()
+	// 5) Start transaction
+	tx, err := a.UserDB.Beginx()
+	if err != nil {
+		a.handleError(c, http.StatusInternalServerError, "Failed to start transaction", err)
+		return
+	}
 
-	if err := db.CreateUser(tx, &newUser); err != nil {
-		tx.Rollback()
+	// Defer rollback in case of failure
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				a.Logger.Error("Failed to rollback transaction", "error", rbErr)
+			}
+		}
+	}()
+
+	// 6) Create user in transaction
+	if err := a.UserDB.CreateUser(tx, &newUser); err != nil {
 		a.handleError(c, http.StatusInternalServerError, "Failed to create user", err)
 		return
 	}
 
-	// 5) Send OTP to new users email, if this fails we rollback the transaction
-	err = a.sendOTP(newUser.Email)
-	if err != nil {
-		tx.Rollback()
-		a.handleError(c, http.StatusInternalServerError, "Failed to send otp", err)
+	// 7) Send OTP
+	if err := a.sendOTP(newUser.Email); err != nil {
+		a.handleError(c, http.StatusInternalServerError, "Failed to send OTP", err)
 		return
 	}
 
-	// 6) Commit the user and send back success
-	tx.Commit()
+	// 8) Commit transaction
+	if err := tx.Commit(); err != nil {
+		a.handleError(c, http.StatusInternalServerError, "Failed to commit transaction", err)
+		return
+	}
 
-	a.Logger.Info("User registered successfully and otp send", "email", newUser.Email, "userID", newUser.ID)
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "User registered successfully",
-		"user": gin.H{
-			"email":     newUser.Email,
-			"firstName": newUser.FirstName,
-			"lastName":  newUser.LastName,
-		},
-	})
+	// 9) Send success response
+	c.JSON(http.StatusOK, gin.H{"message": "User created and OTP sent successfully"})
 }
 
 func (a *AuthController) handleError(c *gin.Context, statusCode int, message string, err error) {

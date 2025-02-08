@@ -5,6 +5,7 @@ import (
 	"wealthscope/backend/internal/controllers/auth"
 	"wealthscope/backend/internal/controllers/bank"
 	"wealthscope/backend/internal/controllers/stock"
+	"wealthscope/backend/internal/db"
 	"wealthscope/backend/internal/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -12,9 +13,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func Routes(router *gin.Engine, db *sqlx.DB, rdb *redis.Client, logger *slog.Logger) error {
+func Routes(router *gin.Engine, database *sqlx.DB, rdb *redis.Client, logger *slog.Logger) error {
+	// Create user database
+	userDB := &db.UserDB{DB: database}
+
 	// Initialise Auth Controller instance
-	authController, err := auth.NewAuthController(db, rdb, logger)
+	authController, err := auth.NewAuthController(userDB, rdb, logger)
 
 	if err != nil {
 		logger.Error("Failed to initialise AuthController", "error", err)
@@ -27,7 +31,7 @@ func Routes(router *gin.Engine, db *sqlx.DB, rdb *redis.Client, logger *slog.Log
 	stockController := stock.NewStockController(logger)
 
 	// Initialise Bank Controller instance
-	bankController := bank.NewBankController(logger, db)
+	bankController := bank.NewBankController(logger, database)
 
 	// Register controllers to routes
 	api := router.Group("/api")

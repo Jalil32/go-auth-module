@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"log/slog"
 	"wealthscope/backend/config"
+	"wealthscope/backend/internal/db"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
 )
 
 type AuthController struct {
-	DB              *sqlx.DB
+	UserDB          *db.UserDB
 	RedisCache      *redis.Client
 	Logger          *slog.Logger
 	JwtToken        string
@@ -23,7 +23,7 @@ type AuthController struct {
 }
 
 // NewAuthController initializes a new AuthController
-func NewAuthController(db *sqlx.DB, rdb *redis.Client, logger *slog.Logger) (*AuthController, error) {
+func NewAuthController(db *db.UserDB, rdb *redis.Client, logger *slog.Logger) (*AuthController, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		logger.Error("Failed to load config", "error", err)
@@ -31,7 +31,7 @@ func NewAuthController(db *sqlx.DB, rdb *redis.Client, logger *slog.Logger) (*Au
 	}
 
 	return &AuthController{
-		DB:              db,
+		UserDB:          db,
 		RedisCache:      rdb,
 		Logger:          logger,
 		JwtToken:        cfg.JWT.Token,
