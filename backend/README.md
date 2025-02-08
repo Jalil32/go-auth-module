@@ -30,6 +30,11 @@ goose -dir ./migrations postgres "user=$POSTGRES_USER password=$POSTGRES_PASSWOR
 
 ```
 
+### Setting up Redis Cache for OTP
+1. Follow installation guide for your OS: https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/
+2. Start redis in a terminal. The app is already configured to use the default address, password and db which is what is in the env template
+
+
 ### Start Dev Database
 1. Ensure you have docker, docker compose and postgres installed
 2. Start the docker daemon using

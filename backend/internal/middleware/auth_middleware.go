@@ -10,10 +10,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type user struct {
-	// add the struct in
-}
-
 // AuthMiddleware is the middleware that checks for the presence and validity of the JWT token
 func (m *Middleware) AuthMiddleware(secretKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
