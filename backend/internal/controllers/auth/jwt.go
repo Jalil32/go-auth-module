@@ -13,11 +13,12 @@ import (
 // JWTService implements JWTGenerator
 type JWTService struct {
 	SecretKey string
+	JwtExpiry string
 }
 
 // GenerateJWT creates a JWT token for the authenticated user
 func (j *JWTService) GenerateJWT(user *models.User) (string, error) {
-	expiryTime, err := time.ParseDuration("1h") // or use config value
+	expiryTime, err := time.ParseDuration(j.JwtExpiry) // or use config value
 	if err != nil {
 		return "", fmt.Errorf("failed to parse expiry time: %w", err)
 	}

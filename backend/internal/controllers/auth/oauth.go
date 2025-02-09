@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 	"wealthscope/backend/internal/models"
 
@@ -11,44 +10,52 @@ import (
 
 // SignInWithProvider handles third-party sign-in using a provider (e.g., Google)
 func (a *AuthController) SignInWithProvider(c *gin.Context) {
+	// 1) Check that provider exists
 	provider := c.Param("provider")
 	if provider == "" {
 		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Provider not specified", nil)
 		return
 	}
 
-	// Add provider to the request URL
+	// 2) Validate provider
+	allowedProviders := map[string]bool{
+		"google": true,
+	}
+	if !allowedProviders[provider] {
+		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Invalid provider specified", nil)
+		return
+	}
+
+	// 3) Add provider to the request URL
 	q := c.Request.URL.Query()
 	q.Add("provider", provider)
 	c.Request.URL.RawQuery = q.Encode()
 
-	// Begin OAuth flow
+	// 4) Begin OAuth flow
 	a.Logger.Info("Starting OAuth flow", "provider", provider)
 	gothic.BeginAuthHandler(c.Writer, c.Request)
 }
 
-// CallbackHandler handles the OAuth callback and user creation
 func (a *AuthController) CallbackHandler(c *gin.Context) {
+	// 1) Check that the provider exists
 	provider := c.Param("provider")
 	if provider == "" {
 		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Provider not specified", nil)
 		return
 	}
 
-	// Add provider to the request URL
+	// 2) Add provider to the request URL
 	q := c.Request.URL.Query()
 	q.Add("provider", provider)
 	c.Request.URL.RawQuery = q.Encode()
 
 	oauthUser, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
-		a.Logger.Error("OAuth complete error", "provider", provider, "error", err)
-		c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("OAuth complete error: %w", err))
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "OAuth complete error", err)
 		return
 	}
 
-	// Check if the user exists in the database
+	// 3) Check if the user exists in the database
 	existingUser, err := a.UserDB.FindUserByEmail(oauthUser.Email)
 	if err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Database error during lookup", err)
@@ -71,6 +78,7 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 		}
 	}()
 
+	// 5) If user does not exist, create user and set verified to true
 	var user *models.User
 	if existingUser == nil {
 		newUser := models.User{
@@ -90,22 +98,22 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 		user = existingUser
 	}
 
-	// Generate JWT token
+	// 6) Generate JWT token
 	token, err := a.JWTGenerator.GenerateJWT(user)
 	if err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to generate JWT", err)
 		return
 	}
 
-	// Set the JWT token as a cookie
+	// 7) Set the JWT token as a cookie
 	a.setAuthCookie(c, token)
 
-	// 7) Commit the transaction
+	// 8) Commit the transaction
 	if err := tx.Commit(); err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Faile to commit transaction", err)
 		return
 	}
 
-	// Redirect to the /dashboard page
+	// 9) Redirect to the /dashboard page
 	c.Redirect(http.StatusFound, a.FrontendAddress+"/auth/otp")
 }

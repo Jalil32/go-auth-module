@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,9 +14,36 @@ type LoginRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
-func (lr *LoginRequest) Validate() error {
+func (lr *LoginRequest) Validate() *ValidationError {
 	validate := validator.New()
-	return validate.Struct(lr)
+	err := validate.Struct(lr)
+	if err != nil {
+		fieldErrors := make(map[string]string)
+
+		// Iterate over validation errors
+		for _, err := range err.(validator.ValidationErrors) {
+			field := err.Field() // Field name (e.g., "Email", "Password")
+			tag := err.Tag()     // Validation rule that failed (e.g., "required", "email")
+
+			// Customize the error message based on the field and tag
+			switch tag {
+			case "required":
+				fieldErrors[field] = fmt.Sprintf("%s is required", field)
+			case "email":
+				fieldErrors[field] = fmt.Sprintf("%s must be a valid email address", field)
+			default:
+				fieldErrors[field] = fmt.Sprintf("%s failed validation: %s", field, tag)
+			}
+		}
+
+		return &ValidationError{
+			UserMessage:   "Validation failed",
+			FieldErrors:   fieldErrors,
+			InternalError: err,
+		}
+	}
+
+	return nil
 }
 
 func (a *AuthController) Login(c *gin.Context) {
@@ -27,12 +55,25 @@ func (a *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	if err := loginRequest.Validate(); err != nil {
-		a.HandleError(c, http.StatusBadRequest, err.Error(), err.Error(), err)
+	// 2) Validate the request
+	if validationErr := loginRequest.Validate(); validationErr != nil {
+		// Construct a detailed error response
+		errorResponse := gin.H{
+			"message": validationErr.UserMessage,
+			"errors":  validationErr.FieldErrors,
+		}
+
+		// Include internal error details in test mode
+		if gin.Mode() == gin.TestMode {
+			errorResponse["internal_message"] = validationErr.InternalError.Error()
+		}
+
+		// Log the error and send the response
+		a.HandleError(c, http.StatusBadRequest, validationErr.UserMessage, "Validation failed", validationErr.InternalError)
 		return
 	}
 
-	// 2) Find the user by email
+	// 3) Find the user by email
 	user, err := a.UserDB.FindUserByEmail(loginRequest.Email)
 	if err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Database lookup error", err)
@@ -40,23 +81,24 @@ func (a *AuthController) Login(c *gin.Context) {
 	}
 
 	if user == nil {
-		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "Database lookup error", err)
+		// No user found with the given email
+		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "User not found", nil)
 		return
 	}
 
-	// 3) Check if the user needs to authenticate via a provider
+	// 4) Check if the user needs to authenticate via a provider
 	if user.PasswordHash == nil && user.Provider != nil {
-		a.HandleError(c, http.StatusUnauthorized, "Please sign in with a provider", "User needs to sign in with provider", err)
+		a.HandleError(c, http.StatusUnauthorized, "Please sign in with a provider", "User needs to sign in with provider", nil)
 		return
 	}
 
-	// 4) Compare the provided password with the hashed password
+	// 5) Compare the provided password with the hashed password
 	if err := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(loginRequest.Password)); err != nil {
 		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "Invalid password", err)
 		return
 	}
 
-	// 5) Handle unverified users
+	// 6) Handle unverified users
 	if !user.Verified {
 		if err := a.sendOTP(user.Email); err != nil {
 			a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to send OTP", err)
@@ -75,7 +117,7 @@ func (a *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	// 6) Generate and set JWT token
+	// 7) Generate and set JWT token
 	token, err := a.JWTGenerator.GenerateJWT(user)
 	if err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to generate JWT Token", err)

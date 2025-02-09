@@ -17,7 +17,7 @@ import (
 func Routes(router *gin.Engine, database *sqlx.DB, rdb *redis.Client, logger *slog.Logger, cfg *config.Config) error {
 	// Create user database
 	userDB := &db.UserDB{DB: database}
-	jwtService := &auth.JWTService{SecretKey: cfg.JWT.Token}
+	jwtService := &auth.JWTService{SecretKey: cfg.JWT.Token, JwtExpiry: cfg.JWT.Expiry}
 
 	// Initialise Auth Controller instance
 	authController, err := auth.NewAuthController(userDB, rdb, logger, jwtService, cfg)

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"wealthscope/backend/internal/models"
@@ -16,11 +17,47 @@ type registerRequest struct {
 	LastName  string `json:"lastName" validate:"required"`
 }
 
+type ValidationError struct {
+	UserMessage   string            // General user-friendly message
+	FieldErrors   map[string]string // Field-specific validation errors
+	InternalError error             // Internal error for logging
+}
+
 // Validate validates the requestPayload using the validator
-func (rp *registerRequest) validate() error {
+func (rp *registerRequest) validate() *ValidationError {
 	validate := validator.New()
 	validate.RegisterValidation("strong_password", passwordValidator)
-	return validate.Struct(rp)
+
+	err := validate.Struct(rp)
+	if err != nil {
+		fieldErrors := make(map[string]string)
+
+		// Iterate over validation errors
+		for _, err := range err.(validator.ValidationErrors) {
+			field := err.Field() // Field name (e.g., "Email", "Password")
+			tag := err.Tag()     // Validation rule that failed (e.g., "required", "email", "strong_password")
+
+			// Customize the error message based on the field and tag
+			switch tag {
+			case "required":
+				fieldErrors[field] = fmt.Sprintf("%s is required", field)
+			case "email":
+				fieldErrors[field] = fmt.Sprintf("%s must be a valid email address", field)
+			case "strong_password":
+				fieldErrors[field] = fmt.Sprintf("%s must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, one digit, and one special character", field)
+			default:
+				fieldErrors[field] = fmt.Sprintf("%s failed validation: %s", field, tag)
+			}
+		}
+
+		return &ValidationError{
+			UserMessage:   "Validation failed",
+			FieldErrors:   fieldErrors,
+			InternalError: err,
+		}
+	}
+
+	return nil
 }
 
 func passwordValidator(fl validator.FieldLevel) bool {
@@ -62,13 +99,25 @@ func (a *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	// Validate the requestPayload
-	if err := registerRequest.validate(); err != nil {
-		a.HandleError(c, http.StatusBadRequest, err.Error(), err.Error(), err)
+	// 2) Validate the requestPayload
+	if validationErr := registerRequest.validate(); validationErr != nil {
+		// Construct a detailed error response
+		errorResponse := gin.H{
+			"message": validationErr.UserMessage,
+			"errors":  validationErr.FieldErrors,
+		}
+
+		// Include internal error details in test mode
+		if gin.Mode() == gin.TestMode {
+			errorResponse["internal_message"] = validationErr.InternalError.Error()
+		}
+
+		// Log the error and send the response
+		a.HandleError(c, http.StatusBadRequest, validationErr.UserMessage, "Validation failed", validationErr.InternalError)
 		return
 	}
 
-	// 2) Check if user exists already
+	// 3) Check if user exists already
 	existingUser, err := a.UserDB.FindUserByEmail(registerRequest.Email)
 	if err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Database lookup error", err)
@@ -80,14 +129,14 @@ func (a *AuthController) Register(c *gin.Context) {
 		return
 	}
 
-	// 3) Hash password
+	// 4) Hash password
 	hashedPassword, err := a.hashPassword(registerRequest.Password)
 	if err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to hash password", err)
 		return
 	}
 
-	// 4) Create new user
+	// 5) Create new user
 	newUser := models.User{
 		Email:        registerRequest.Email,
 		FirstName:    registerRequest.FirstName,
@@ -95,7 +144,7 @@ func (a *AuthController) Register(c *gin.Context) {
 		PasswordHash: &hashedPassword,
 	}
 
-	// 5) Start transaction
+	// 6) Start transaction
 	tx, err := a.UserDB.Beginx()
 	if err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to start transaction", err)
@@ -111,24 +160,24 @@ func (a *AuthController) Register(c *gin.Context) {
 		}
 	}()
 
-	// 6) Create user in transaction
+	// 7) Create user in transaction
 	if err := a.UserDB.CreateUser(tx, &newUser); err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to create user", err)
 		return
 	}
 
-	// 7) Send OTP
+	// 8) Send OTP
 	if err := a.sendOTP(newUser.Email); err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to send OTP", err)
 		return
 	}
 
-	// 8) Commit transaction
+	// 9) Commit transaction
 	if err := tx.Commit(); err != nil {
 		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to commit transaction", err)
 		return
 	}
 
-	// 9) Send success response
+	// 10) Send success response
 	c.JSON(http.StatusOK, gin.H{"message": "User created and OTP sent successfully"})
 }

@@ -99,7 +99,7 @@ func TestAuthController_Login(t *testing.T) {
 			},
 			mockRedis:      &MockRedisClient{},
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   `{"details":"Key: 'requestPayload.Email' Error:Field validation for 'Email' failed on the 'required' tag", "error":"Invalid input"}`,
+			expectedBody:   `{"error":"Key: 'LoginRequest.Email' Error:Field validation for 'Email' failed on the 'required' tag", "internal_message":"Validation failed", "message":"Validation failed"}`,
 		},
 		{
 			name: "Missing Password",
@@ -121,7 +121,7 @@ func TestAuthController_Login(t *testing.T) {
 			},
 			mockRedis:      &MockRedisClient{},
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   `{"details":"Key: 'requestPayload.Password' Error:Field validation for 'Password' failed on the 'required' tag", "error":"Invalid input"}`,
+			expectedBody:   `{"error":"Key: 'LoginRequest.Password' Error:Field validation for 'Password' failed on the 'required' tag", "internal_message":"Validation failed", "message":"Validation failed"}`,
 		},
 		{
 			name: "User Not Found",
@@ -144,7 +144,7 @@ func TestAuthController_Login(t *testing.T) {
 			},
 			mockRedis:      &MockRedisClient{},
 			expectedStatus: http.StatusUnauthorized,
-			expectedBody:   `{"error":"Invalid email or password"}`,
+			expectedBody:   `{"error":"No error", "internal_message":"User not found", "message":"Invalid email or password"}`,
 		},
 		{
 			name: "Database Error",
@@ -163,7 +163,7 @@ func TestAuthController_Login(t *testing.T) {
 			},
 			mockRedis:      &MockRedisClient{},
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   `{"error":"Database error during user lookup"}`,
+			expectedBody:   `{"error":"database error", "internal_message":"Database lookup error", "message":"Something went wrong..."}`,
 		},
 		{
 			name: "JWT Generation Failure",
@@ -190,7 +190,7 @@ func TestAuthController_Login(t *testing.T) {
 			},
 			mockRedis:      &MockRedisClient{},
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   `{"error":"Failed to generate token"}`,
+			expectedBody:   `{"error":"JWT generation failed", "internal_message":"Failed to generate JWT Token", "message":"Something went wrong..."}`,
 		},
 		{
 			name: "User Needs to Sign In with Provider",
@@ -218,7 +218,7 @@ func TestAuthController_Login(t *testing.T) {
 			},
 			mockRedis:      &MockRedisClient{},
 			expectedStatus: http.StatusUnauthorized,
-			expectedBody:   `{"error":"Please sign in with a provider"}`,
+			expectedBody:   `{"error":"No error", "internal_message":"User needs to sign in with provider", "message":"Please sign in with a provider"}`,
 		},
 		{
 			name: "Successful Login",
@@ -252,13 +252,13 @@ func TestAuthController_Login(t *testing.T) {
 				},
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"message":"Login successful","token":"mock-token"}`,
+			expectedBody:   `{"message":"Login successful"}`,
 		},
 		{
 			name: "Invalid Email",
 			requestBody: map[string]string{
-				"email":    "nonexistent@example.com",
-				"password": "password123",
+				"email":    "nonexistentexample.com",
+				"password": "Password123!",
 			},
 			mockDB: &MockDB{
 				FindUserByEmailFunc: func(email string) (*models.User, error) {
@@ -268,8 +268,8 @@ func TestAuthController_Login(t *testing.T) {
 			mockJWT:        &MockJWTGenerator{},
 			mockLogger:     &MockLogger{ErrorFunc: func(msg string, keysAndValues ...interface{}) {}},
 			mockRedis:      &MockRedisClient{},
-			expectedStatus: http.StatusUnauthorized,
-			expectedBody:   `{"error":"Invalid email or password"}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   `{"error":"Key: 'LoginRequest.Email' Error:Field validation for 'Email' failed on the 'email' tag", "internal_message":"Validation failed", "message":"Validation failed"}`,
 		},
 	}
 
