@@ -13,33 +13,26 @@ import (
 )
 
 type Config struct {
-	Port        string
-	ClientLocal string
-	ClientProxy string
-	ClientFly   string
-	Backend     BackendConfig
-	Frontend    FrontendConfig
-	SMTP        SMTPConfig
-	DB          PostgresConfig
-	OAuth       OAuthConfig
-	JWT         JWTConfig
-	Redis       RedisConfig
+	Fly      FlyConfig
+	Frontend FrontendConfig
+	Backend  BackendConfig
+	SMTP     SMTPConfig
+	DB       PostgresConfig
+	OAuth    OAuthConfig
+	JWT      JWTConfig
+	Redis    RedisConfig
 }
 
 type BackendConfig struct {
-	Port string
-	IP   string
+	Addr string
+}
+
+type FlyConfig struct {
+	Addr string
 }
 
 type FrontendConfig struct {
-	Port        string
-	IP          string
-	DB          PostgresConfig
-	OAuth       OAuthConfig
-	JWT         JWTConfig
-	ClientLocal string
-	ClientProxy string
-	ClientFly   string
+	Addr string
 }
 
 type PostgresConfig struct {
@@ -78,17 +71,14 @@ type RedisConfig struct {
 func LoadConfig() (*Config, error) {
 	cfg := &Config{
 		Frontend: FrontendConfig{
-			IP:   os.Getenv("FRONTEND_IP"),
-			Port: os.Getenv("FRONTEND_PORT"),
+			Addr: os.Getenv("CLIENT_LOCAL"),
 		},
 		Backend: BackendConfig{
-			IP:   os.Getenv("BACKEND_IP"),
-			Port: os.Getenv("BACKEND_PORT"),
+			Addr: os.Getenv("CLIENT_PROXY"),
 		},
-		Port:        os.Getenv("PORT"),
-		ClientLocal: os.Getenv("CLIENT_LOCAL"),
-		ClientProxy: os.Getenv("CLIENT_PROXY"),
-		ClientFly:   os.Getenv("CLIENT_FLY"),
+		Fly: FlyConfig{
+			Addr: os.Getenv("CLIENT_FLY"),
+		},
 		DB: PostgresConfig{
 			User:     os.Getenv("POSTGRES_USER"),
 			Name:     os.Getenv("POSTGRES_NAME"),

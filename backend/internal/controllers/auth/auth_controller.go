@@ -58,7 +58,7 @@ func NewAuthController(userRepo UserRepository, rdb RedisClient, logger Logger, 
 		Port:            cfg.SMTP.Port,
 		Username:        cfg.SMTP.Username,
 		Password:        cfg.SMTP.Password,
-		FrontendAddress: cfg.Frontend.IP + ":" + cfg.Frontend.Port,
+		FrontendAddress: cfg.Frontend.Addr,
 		JWTGenerator:    jwtGenerator,
 	}, nil
 }

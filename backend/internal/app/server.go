@@ -2,6 +2,7 @@ package server
 
 import (
 	"log/slog"
+	"strings"
 	"time"
 	"wealthscope/backend/config"
 	"wealthscope/backend/internal/routes"
@@ -26,7 +27,7 @@ func StartServer(cfg *config.Config, db *sqlx.DB, rdb *redis.Client, logger *slo
 
 	// Configure CORS
 	corsConfig := cors.Config{
-		AllowOrigins:     []string{cfg.ClientFly, cfg.ClientLocal, cfg.ClientProxy},
+		AllowOrigins:     []string{cfg.Fly.Addr, cfg.Frontend.Addr, cfg.Backend.Addr},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -44,9 +45,15 @@ func StartServer(cfg *config.Config, db *sqlx.DB, rdb *redis.Client, logger *slo
 	// Register routes
 	routes.Routes(router, db, rdb, logger, cfg)
 
+	addr := cfg.Backend.Addr
+
+	// Remove "http://" if present
+	addr = strings.TrimPrefix(addr, "http://")
+	addr = strings.TrimPrefix(addr, "https://")
+
 	// Start the server
-	logger.Info("Starting Server", "port", cfg.Port)
-	err := router.Run(("0.0.0.0:" + cfg.Port))
+	logger.Info("Starting Server", "address", cfg.Backend.Addr)
+	err := router.Run(addr)
 
 	return err
 }
