@@ -2,6 +2,7 @@ package server
 
 import (
 	"log/slog"
+	"time"
 	"wealthscope/backend/config"
 	"wealthscope/backend/internal/routes"
 
@@ -23,9 +24,19 @@ func StartServer(cfg *config.Config, db *sqlx.DB, rdb *redis.Client, logger *slo
 	// Set gin to release mode so we get clean logs
 	gin.SetMode(gin.ReleaseMode)
 
+	// Configure CORS
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{cfg.ClientFly, cfg.ClientLocal, cfg.ClientProxy},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+
 	// Initialise gin router
 	router := gin.New()
-	router.Use(cors.Default())
+	router.Use(cors.New(corsConfig)) // pass cors config to gin router
 
 	// This means all our logs will be same format instead of a mix between gins and slogs
 	router.Use(CustomLogger(logger))
@@ -34,8 +45,8 @@ func StartServer(cfg *config.Config, db *sqlx.DB, rdb *redis.Client, logger *slo
 	routes.Routes(router, db, rdb, logger, cfg)
 
 	// Start the server
-	logger.Info("Starting Server", "port", cfg.Backend.Port)
-	err := router.Run((cfg.Backend.IP + ":" + cfg.Backend.Port))
+	logger.Info("Starting Server", "port", cfg.Port)
+	err := router.Run(("0.0.0.0:" + cfg.Port))
 
 	return err
 }

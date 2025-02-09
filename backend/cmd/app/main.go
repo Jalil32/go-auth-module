@@ -9,6 +9,7 @@ import (
 	server "wealthscope/backend/internal/app"
 	"wealthscope/backend/internal/db"
 
+	// "wealthscope/backend/internal/db"
 	"github.com/lmittmann/tint"
 	"github.com/redis/go-redis/v9"
 )

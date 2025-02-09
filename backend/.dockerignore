@@ -1,0 +1,8 @@
+# flyctl launch added from .gitignore
+
+# commenting this out temporarily until we move
+# to fly secrets..
+#**/.env
+**/build/*
+
+fly.toml

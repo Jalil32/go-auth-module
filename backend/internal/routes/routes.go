@@ -58,6 +58,12 @@ func Routes(router *gin.Engine, database *sqlx.DB, rdb *redis.Client, logger *sl
 			bank.POST("/upload", bankController.UploadBankStatement)
 		}
 
+		// test endpoint, remove after use
+		api.GET("/test", func(context *gin.Context) {
+			context.JSON(200, gin.H{
+				"message": "hello from backend test endpoint",
+			})
+		})
 	}
 
 	router.GET("/protected", middleware.AuthMiddleware(authController.JwtToken), func(c *gin.Context) {

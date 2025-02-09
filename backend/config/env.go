@@ -13,13 +13,17 @@ import (
 )
 
 type Config struct {
-	Backend  BackendConfig
-	Frontend FrontendConfig
-	SMTP     SMTPConfig
-	DB       PostgresConfig
-	OAuth    OAuthConfig
-	JWT      JWTConfig
-	Redis    RedisConfig
+	Port        string
+	ClientLocal string
+	ClientProxy string
+	ClientFly   string
+	Backend     BackendConfig
+	Frontend    FrontendConfig
+	SMTP        SMTPConfig
+	DB          PostgresConfig
+	OAuth       OAuthConfig
+	JWT         JWTConfig
+	Redis       RedisConfig
 }
 
 type BackendConfig struct {
@@ -28,8 +32,14 @@ type BackendConfig struct {
 }
 
 type FrontendConfig struct {
-	Port string
-	IP   string
+	Port        string
+	IP          string
+	DB          PostgresConfig
+	OAuth       OAuthConfig
+	JWT         JWTConfig
+	ClientLocal string
+	ClientProxy string
+	ClientFly   string
 }
 
 type PostgresConfig struct {
@@ -75,6 +85,10 @@ func LoadConfig() (*Config, error) {
 			IP:   os.Getenv("BACKEND_IP"),
 			Port: os.Getenv("BACKEND_PORT"),
 		},
+		Port:        os.Getenv("PORT"),
+		ClientLocal: os.Getenv("CLIENT_LOCAL"),
+		ClientProxy: os.Getenv("CLIENT_PROXY"),
+		ClientFly:   os.Getenv("CLIENT_FLY"),
 		DB: PostgresConfig{
 			User:     os.Getenv("POSTGRES_USER"),
 			Name:     os.Getenv("POSTGRES_NAME"),
