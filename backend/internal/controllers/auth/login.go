@@ -23,51 +23,46 @@ func (a *AuthController) Login(c *gin.Context) {
 
 	// 1) Bind and validate the request
 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
-		a.Logger.Error("Failed to bind JSON", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Invalid Request Payload", err)
 		return
 	}
 
 	if err := loginRequest.Validate(); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input", "details": err.Error()})
+		a.HandleError(c, http.StatusBadRequest, err.Error(), err.Error(), err)
 		return
 	}
 
 	// 2) Find the user by email
 	user, err := a.UserDB.FindUserByEmail(loginRequest.Email)
 	if err != nil {
-		a.Logger.Error("Database error during user lookup", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error during user lookup"})
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Database lookup error", err)
 		return
 	}
 
 	if user == nil {
-		a.Logger.Error("User not found", "email", loginRequest.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "Database lookup error", err)
 		return
 	}
 
 	// 3) Check if the user needs to authenticate via a provider
 	if user.PasswordHash == nil && user.Provider != nil {
-		a.Logger.Error("User needs to sign in with provider", "email", loginRequest.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Please sign in with a provider"})
+		a.HandleError(c, http.StatusUnauthorized, "Please sign in with a provider", "User needs to sign in with provider", err)
 		return
 	}
 
 	// 4) Compare the provided password with the hashed password
 	if err := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(loginRequest.Password)); err != nil {
-		a.Logger.Error("Invalid password", "email", loginRequest.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "Invalid password", err)
 		return
 	}
 
 	// 5) Handle unverified users
 	if !user.Verified {
 		if err := a.sendOTP(user.Email); err != nil {
-			a.handleError(c, http.StatusInternalServerError, "Failed to send OTP", err)
+			a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to send OTP", err)
 			return
 		}
-
+		// Not using normal error handling as this is a special case
 		a.Logger.Info("User not verified. OTP has been sent.", "email", user.Email, "userID", user.ID)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"message": "User is not verified.",
@@ -83,8 +78,7 @@ func (a *AuthController) Login(c *gin.Context) {
 	// 6) Generate and set JWT token
 	token, err := a.JWTGenerator.GenerateJWT(user)
 	if err != nil {
-		a.Logger.Error("Failed to generate JWT token", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to generate JWT Token", err)
 		return
 	}
 

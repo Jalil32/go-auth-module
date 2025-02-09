@@ -16,8 +16,7 @@ func (a *AuthController) VerifyOTPHandler(c *gin.Context) {
 	var otpRequest OTPRequest
 
 	if err := c.ShouldBindJSON(&otpRequest); err != nil {
-		a.Logger.Error("Failed to bind JSON", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Invalid request payload ", err)
 		return
 	}
 
@@ -26,22 +25,21 @@ func (a *AuthController) VerifyOTPHandler(c *gin.Context) {
 
 	// 3) If incorrect, send back error message
 	if !validated {
-		a.Logger.Error("Incorrect or expired one time password.")
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Incorrect or expired one time password."})
+		a.HandleError(c, http.StatusUnauthorized, "Incorrect or expired one time password. Please try again.", "Incorrect or expired one time password.", nil)
 		return
 	}
 
 	// 4) If correct fetch user
 	existingUser, err := a.UserDB.FindUserByEmail(otpRequest.Email)
 	if err != nil {
-		a.handleError(c, http.StatusInternalServerError, "Database error during user lookup", err)
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Database error during user lookup", err)
 		return
 	}
 
 	// 5) Update user to be verified
 	tx, err := a.UserDB.Beginx()
 	if err != nil {
-		a.handleError(c, http.StatusInternalServerError, "Failed to start transaction", err)
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to start transaction", err)
 		return
 	}
 
@@ -57,19 +55,19 @@ func (a *AuthController) VerifyOTPHandler(c *gin.Context) {
 	existingUser.Verified = true
 
 	if err := a.UserDB.UpdateUser(tx, existingUser); err != nil {
-		a.handleError(c, http.StatusInternalServerError, "Failed to update user", err)
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to update user", err)
 		return
 	}
 
 	token, err := a.JWTGenerator.GenerateJWT(existingUser)
 	if err != nil {
-		a.handleError(c, http.StatusInternalServerError, "Failed to generate token", err)
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to generate token", err)
 		return
 	}
 
 	// 7) Commit the transaction
 	if err := tx.Commit(); err != nil {
-		a.handleError(c, http.StatusInternalServerError, "Failed to commit transaction", err)
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to commit transaction", err)
 		return
 	}
 
@@ -78,14 +76,8 @@ func (a *AuthController) VerifyOTPHandler(c *gin.Context) {
 	a.Logger.Info("User email successfully verified", "email", existingUser.Email, "userID", existingUser.ID)
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User successfully verified",
-		"user": gin.H{
-			"email":     existingUser.Email,
-			"firstName": existingUser.FirstName,
-			"lastName":  existingUser.LastName,
-		},
 	})
 }
 
 func (a *AuthController) generateNewOTPHandler(c *gin.Context) {
-	// 1) Delete the old one and generate new one
 }
