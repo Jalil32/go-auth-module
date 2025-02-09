@@ -2,28 +2,74 @@ package auth
 
 import (
 	"net/http"
+	"regexp"
 	"wealthscope/backend/internal/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
-type RegisterRequest struct {
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
+type registerRequest struct {
+	Email     string `json:"email" validate:"required"`
+	Password  string `json:"password" validate:"required"`
+	FirstName string `json:"firstName" validate:"required"`
+	LastName  string `json:"lastName" validate:"required"`
+}
+
+// Validate validates the requestPayload using the validator
+func (rp *registerRequest) validate() error {
+	validate := validator.New()
+	validate.RegisterValidation("strong_password", passwordValidator)
+	return validate.Struct(rp)
+}
+
+func passwordValidator(fl validator.FieldLevel) bool {
+	password := fl.Field().String()
+
+	// Check minimum length
+	if len(password) < 8 {
+		return false
+	}
+
+	// Check for at least one lowercase letter
+	if !regexp.MustCompile(`[a-z]`).MatchString(password) {
+		return false
+	}
+
+	// Check for at least one uppercase letter
+	if !regexp.MustCompile(`[A-Z]`).MatchString(password) {
+		return false
+	}
+
+	// Check for at least one digit
+	if !regexp.MustCompile(`\d`).MatchString(password) {
+		return false
+	}
+
+	// Check for at least one special character
+	if !regexp.MustCompile(`[@$!%*?&]`).MatchString(password) {
+		return false
+	}
+
+	return true
 }
 
 func (a *AuthController) Register(c *gin.Context) {
 	// 1) Unmarshal request body into request struct
-	var req RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var registerRequest registerRequest
+	if err := c.ShouldBindJSON(&registerRequest); err != nil {
 		a.handleError(c, http.StatusBadRequest, "Invalid request payload", err)
 		return
 	}
 
+	// Validate the requestPayload
+	if err := registerRequest.validate(); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input", "details": err.Error()})
+		return
+	}
+
 	// 2) Check if user exists already
-	existingUser, err := a.UserDB.FindUserByEmail(req.Email)
+	existingUser, err := a.UserDB.FindUserByEmail(registerRequest.Email)
 	if err != nil {
 		a.handleError(c, http.StatusInternalServerError, "Database error during user lookup", err)
 		return
@@ -35,7 +81,7 @@ func (a *AuthController) Register(c *gin.Context) {
 	}
 
 	// 3) Hash password
-	hashedPassword, err := a.hashPassword(req.Password)
+	hashedPassword, err := a.hashPassword(registerRequest.Password)
 	if err != nil {
 		a.handleError(c, http.StatusInternalServerError, "Failed to hash password", err)
 		return
@@ -43,9 +89,9 @@ func (a *AuthController) Register(c *gin.Context) {
 
 	// 4) Create new user
 	newUser := models.User{
-		Email:        req.Email,
-		FirstName:    req.FirstName,
-		LastName:     req.LastName,
+		Email:        registerRequest.Email,
+		FirstName:    registerRequest.FirstName,
+		LastName:     registerRequest.LastName,
 		PasswordHash: &hashedPassword,
 	}
 

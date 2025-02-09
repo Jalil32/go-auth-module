@@ -13,7 +13,7 @@ import (
 // AuthMiddleware is the middleware that checks for the presence and validity of the JWT token
 func (m *Middleware) AuthMiddleware(secretKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Extract token from cookie or header
+		// 1) Extract token from cookie or header
 		token, err := c.Cookie("auth_token") // Try getting it from cookies
 		if err != nil {
 			token = c.GetHeader("Authorization") // Try getting from Authorization header
@@ -25,7 +25,7 @@ func (m *Middleware) AuthMiddleware(secretKey string) gin.HandlerFunc {
 			}
 		}
 
-		// Decode the JWT
+		// 2) Decode the JWT and validate it
 		user, err := m.decodeJWT(token, secretKey)
 		if err != nil {
 			m.Logger.Error("Invalid or expired token", "error", err)
@@ -34,7 +34,7 @@ func (m *Middleware) AuthMiddleware(secretKey string) gin.HandlerFunc {
 			return
 		}
 
-		// Store user info in context for later use
+		// 3) Set the user in the context for downstream handlers
 		c.Set("user", user)
 		c.Next()
 	}
@@ -42,9 +42,9 @@ func (m *Middleware) AuthMiddleware(secretKey string) gin.HandlerFunc {
 
 // decodeJWT extracts user information from the JWT token
 func (m *Middleware) decodeJWT(tokenString string, secretKey string) (*models.User, error) {
-	// Parse the token with claims
+	// 1) Parse the token with claims
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Validate the signing method
+		// 2) Validate the signing method
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			m.Logger.Error("Unexpected signing method")
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -52,17 +52,17 @@ func (m *Middleware) decodeJWT(tokenString string, secretKey string) (*models.Us
 		return []byte(secretKey), nil // Return the secret key
 	})
 
-	// Check for parsing errors
+	// 3) Check for parsing errors
 	if err != nil {
 		m.Logger.Error("Failed to parse token", "error", err)
 		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
-	// Extract claims if the token is valid
+	// 4) Extract claims if the token is valid
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		user := &models.User{}
 
-		// Extract user ID
+		// 5) Extract user ID
 		if userID, ok := claims["user_id"].(float64); ok {
 			user.ID = int(userID) // Convert float64 to int
 		} else {
@@ -70,7 +70,7 @@ func (m *Middleware) decodeJWT(tokenString string, secretKey string) (*models.Us
 			return nil, fmt.Errorf("invalid user_id type in token")
 		}
 
-		// Extract email
+		// 6) Extract email
 		if email, ok := claims["email"].(string); ok {
 			user.Email = email
 		} else {
@@ -78,7 +78,7 @@ func (m *Middleware) decodeJWT(tokenString string, secretKey string) (*models.Us
 			return nil, fmt.Errorf("invalid email type in token")
 		}
 
-		// Check if the token is expired
+		// 7) Check if the token is expired
 		if exp, ok := claims["exp"].(float64); ok {
 			if int64(exp) < time.Now().Unix() {
 				m.Logger.Error("Token has expired")

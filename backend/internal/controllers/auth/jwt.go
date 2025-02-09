@@ -10,10 +10,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type JWTGenerator interface {
-	GenerateJWT(user *models.User) (string, error)
-}
-
 // JWTService implements JWTGenerator
 type JWTService struct {
 	SecretKey string
