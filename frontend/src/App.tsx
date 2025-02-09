@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import { InputOtpPage } from "./pages/OtpPage";
 import ErrorPage from "./pages/ErrorPage";
 import { Landing } from "./pages/Landing";
+
 const router = createBrowserRouter([
 	{
 		path: "/",
