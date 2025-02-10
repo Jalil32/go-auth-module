@@ -2,9 +2,9 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import "./index.css";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
-import { InputOtpPage } from "./pages/OtpPage";
 import ErrorPage from "./pages/ErrorPage";
 import { Landing } from "./pages/Landing";
+import { InputOtpPage } from "./pages/OtpPage";
 
 const router = createBrowserRouter([
 	{
@@ -25,8 +25,8 @@ const router = createBrowserRouter([
 	},
 	{
 		path: "*",
-		element: <ErrorPage />
-	}
+		element: <ErrorPage />,
+	},
 ]);
 
 function App() {

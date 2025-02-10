@@ -3,7 +3,7 @@ import {
 	InputOTPGroup,
 	InputOTPSeparator,
 	InputOTPSlot,
-} from "@/components/ui/input-otp"
+} from "@/components/ui/input-otp";
 
 export function InputOtpPage() {
 	return (
@@ -25,5 +25,5 @@ export function InputOtpPage() {
 				</InputOTPGroup>
 			</InputOTP>
 		</div>
-	)
+	);
 }

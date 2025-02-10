@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import GenericPageTemplate from "./GenericPageTemplate";
 
 const API_BASE_URL = import.meta.env.DEV
@@ -36,7 +36,9 @@ export default function Dashboard() {
 					<div>Error: {error}</div>
 				) : backendData ? ( // shouldnt chain these conditionals but its temporary so meh
 					<div>
-						<h2 className="text-xl font-bold mb-2">Backend Response:</h2>
+						<h2 className="text-xl font-bold mb-2">
+							Backend Response:
+						</h2>
 						<pre className="bg-black p-2 rounded">
 							{JSON.stringify(backendData, null, 2)}
 						</pre>

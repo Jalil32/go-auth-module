@@ -1,98 +1,61 @@
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChangeEvent, FormEvent, useState } from "react";
+import { cn } from "@/lib/utils";
 import axios from "axios";
+import { useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 interface LoginFormProps extends React.ComponentPropsWithoutRef<"form"> {
 	toggleMode: () => void;
 }
 
-interface FormErrors {
-	submitError?: string;
-	email?: string;
-	password?: string,
-}
+type Inputs = {
+	email: string;
+	password: string;
+};
 
-export function LoginForm({
-	className,
-	toggleMode,
-	...props
-}: LoginFormProps) {
-	const navigate = useNavigate()
-	const [errors, setErrors] = useState<FormErrors>({});
-	const [formData, setFormData] = useState({
-		email: '',
-		password: ''
-	});
+export function LoginForm({ className, toggleMode, ...props }: LoginFormProps) {
+	const navigate = useNavigate();
+	const {
+		register,
+		handleSubmit,
+		formState: { errors },
+	} = useForm<Inputs>();
+	const [submitError, setSubmitError] = useState<string | null>(null);
 
 	const handleGoogleAuth = async () => {
-		window.location.href = '/api/auth/google'
-		// will need backend to redirect to custom error page
-	}
-
-	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
-		setFormData({
-			...formData,
-			[name]: value,
-		});
+		window.location.href = "/api/auth/google";
 	};
 
-	const validateForm = () => {
-		const newErrors: { email?: string; password?: string } = {};
-
-		if (!formData.email) {
-			newErrors.email = "Email is required";
-		} else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-			newErrors.email = "Email address is invalid";
-		}
-
-		if (!formData.password) {
-			newErrors.password = "Password is required";
-		}
-
-		setErrors(newErrors);
-		return Object.keys(newErrors).length === 0;
-	};
-
-
-
-	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-
-		const isValid = validateForm();
-		if (!isValid) return;
-
+	const onSubmit: SubmitHandler<Inputs> = async (data) => {
 		try {
-			const res = await axios.post('/api/auth/login', formData);
-			setErrors({}); // Clear previous errors
+			const res = await axios.post("/api/auth/login", data);
 
 			if (res.status === 200) {
 				console.log("Login Successful");
-				navigate('/dashboard');
+				navigate("/dashboard");
 			}
 		} catch (error: unknown) {
-			const newErrors: FormErrors = {};
-
 			if (axios.isAxiosError(error)) {
 				if (error.response?.status === 401) {
-					newErrors.submitError = "Invalid email or password";
+					setSubmitError("Invalid email or password");
 				} else {
-					newErrors.submitError = "Something went wrong. Please try again.";
+					setSubmitError("Something went wrong. Please try again.");
 				}
 			} else {
-				newErrors.submitError = "An unexpected error occurred.";
+				setSubmitError("An unexpected error occurred.");
 			}
-
-			setErrors(newErrors);
 		}
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
+		<form
+			onSubmit={handleSubmit(onSubmit)}
+			className={cn("flex flex-col gap-6", className)}
+			{...props}
+		>
 			<div className="flex flex-col items-center gap-2 text-center">
 				<h1 className="text-2xl font-bold">Login to Wealth Scope</h1>
 				<p className="text-balance text-sm text-muted-foreground">
@@ -105,13 +68,20 @@ export function LoginForm({
 					<Input
 						id="email"
 						type="email"
-						name="email"
 						placeholder="ws@gmail.com"
-						value={formData.email}
-						onChange={handleChange}
-						required
+						{...register("email", {
+							required: "Email is required",
+							pattern: {
+								value: /\S+@\S+\.\S+/,
+								message: "Email address is invalid",
+							},
+						})}
 					/>
-					{errors.email && <span className="text-sm text-red-500">{errors.email}</span>}
+					{errors.email && (
+						<span className="text-sm text-red-500">
+							{errors.email.message}
+						</span>
+					)}
 				</div>
 				<div className="grid gap-2">
 					<div className="flex items-center">
@@ -126,13 +96,20 @@ export function LoginForm({
 					<Input
 						id="password"
 						type="password"
-						name="password"
-						value={formData.password}
-						onChange={handleChange}
-						required
+						{...register("password", {
+							required: "Password is required",
+						})}
 					/>
-					{errors.password && <span className="text-sm text-red-500">{errors.password}</span>}
-					{errors.submitError && <span className="text-sm text-red-500">{errors.submitError}</span>}
+					{errors.password && (
+						<span className="text-sm text-red-500">
+							{errors.password.message}
+						</span>
+					)}
+					{submitError && (
+						<span className="text-sm text-red-500">
+							{submitError}
+						</span>
+					)}
 				</div>
 				<Button type="submit" className="w-full">
 					Login
@@ -142,7 +119,12 @@ export function LoginForm({
 						Or continue with
 					</span>
 				</div>
-				<Button onClick={handleGoogleAuth} type="button" variant="outline" className="w-full">
+				<Button
+					onClick={handleGoogleAuth}
+					type="button"
+					variant="outline"
+					className="w-full"
+				>
 					Login with Google
 				</Button>
 			</div>

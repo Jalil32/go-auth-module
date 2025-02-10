@@ -1,9 +1,9 @@
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChangeEvent, FormEvent, useState } from "react";
+import { cn } from "@/lib/utils";
 import axios from "axios";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface FormData {
@@ -27,7 +27,11 @@ interface RegisterFormProps extends React.ComponentPropsWithoutRef<"form"> {
 	toggleMode: () => void;
 }
 
-export function RegisterForm({ className, toggleMode, ...props }: RegisterFormProps) {
+export function RegisterForm({
+	className,
+	toggleMode,
+	...props
+}: RegisterFormProps) {
 	const navigate = useNavigate();
 	const [formData, setFormData] = useState<FormData>({
 		email: "",
@@ -44,9 +48,9 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 	};
 
 	const handleGoogleAuth = async () => {
-		window.location.href = '/api/auth/google'
+		window.location.href = "/api/auth/google";
 		// will need backend to redirect to custom error page
-	}
+	};
 
 	const validateForm = (): boolean => {
 		const newErrors: FormErrors = {};
@@ -99,7 +103,7 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 				newErrors.submitError =
 					error.response?.status === 409
 						? error.response?.data.error
-						: "Something went wrong. Please try again."
+						: "Something went wrong. Please try again.";
 			} else {
 				newErrors.submitError = "An unexpected error occurred.";
 			}
@@ -109,7 +113,11 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
+		<form
+			onSubmit={handleSubmit}
+			className={cn("flex flex-col gap-6", className)}
+			{...props}
+		>
 			<div className="flex flex-col items-center gap-2 text-center">
 				<h1 className="text-2xl font-bold">Signup to Wealth Scope</h1>
 				<p className="text-balance text-sm text-muted-foreground">
@@ -128,7 +136,11 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 						onChange={handleChange}
 						required
 					/>
-					{errors.firstName && <span className="text-sm text-red-500">{errors.firstName}</span>}
+					{errors.firstName && (
+						<span className="text-sm text-red-500">
+							{errors.firstName}
+						</span>
+					)}
 				</div>
 				<div className="grid gap-2">
 					<Label htmlFor="lastName">Last Name</Label>
@@ -141,7 +153,11 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 						onChange={handleChange}
 						required
 					/>
-					{errors.lastName && <span className="text-sm text-red-500">{errors.lastName}</span>}
+					{errors.lastName && (
+						<span className="text-sm text-red-500">
+							{errors.lastName}
+						</span>
+					)}
 				</div>
 				<div className="grid gap-2">
 					<Label htmlFor="email">Email</Label>
@@ -154,14 +170,28 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 						onChange={handleChange}
 						required
 					/>
-					{errors.email && <span className="text-sm text-red-500">{errors.email}</span>}
+					{errors.email && (
+						<span className="text-sm text-red-500">
+							{errors.email}
+						</span>
+					)}
 				</div>
 				<div className="grid gap-2">
 					<div className="flex items-center">
 						<Label htmlFor="password">Password</Label>
 					</div>
-					<Input id="password" name="password" type="password" onChange={handleChange} required />
-					{errors.password && <span className="text-sm text-red-500">{errors.password}</span>}
+					<Input
+						id="password"
+						name="password"
+						type="password"
+						onChange={handleChange}
+						required
+					/>
+					{errors.password && (
+						<span className="text-sm text-red-500">
+							{errors.password}
+						</span>
+					)}
 				</div>
 				<div className="grid gap-2">
 					<div className="flex items-center">
@@ -169,9 +199,23 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 							Confirm Password
 						</Label>
 					</div>
-					<Input id="confirmPassword" name="passwordConfirm" type="password" onChange={handleChange} required />
-					{errors.passwordConfirm && <span className="text-sm text-red-500">{errors.passwordConfirm}</span>}
-					{errors.submitError && <span className="text-sm text-red-500">{errors.submitError}</span>}
+					<Input
+						id="confirmPassword"
+						name="passwordConfirm"
+						type="password"
+						onChange={handleChange}
+						required
+					/>
+					{errors.passwordConfirm && (
+						<span className="text-sm text-red-500">
+							{errors.passwordConfirm}
+						</span>
+					)}
+					{errors.submitError && (
+						<span className="text-sm text-red-500">
+							{errors.submitError}
+						</span>
+					)}
 				</div>
 				<Button type="submit" className="w-full">
 					Signup
@@ -181,7 +225,12 @@ export function RegisterForm({ className, toggleMode, ...props }: RegisterFormPr
 						Or continue with
 					</span>
 				</div>
-				<Button onClick={handleGoogleAuth} type="button" variant="outline" className="w-full">
+				<Button
+					onClick={handleGoogleAuth}
+					type="button"
+					variant="outline"
+					className="w-full"
+				>
 					Signup with Google
 				</Button>
 			</div>
