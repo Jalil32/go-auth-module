@@ -173,7 +173,7 @@ const UploadBankStatementPage = () => {
 							</TableCaption>
 						</Table>
 					) : (
-						<div className="flex flex-col justify-center items-center h-full text-muted space-y-4">
+						<div className="flex flex-col justify-center items-center h-full text-muted space-y-10">
 							<div className="flex flex-col justify-center items-center space-y-2">
 								<h1 className="flex flex-row items-center text-2xl font-semibold">
 									<Eye className="mr-2" /> File Preview
@@ -181,6 +181,9 @@ const UploadBankStatementPage = () => {
 								<p>Preview of uploaded file will appear here</p>
 							</div>
 							<div>
+								<h1 className="text-center font-semibold">
+									Your file should look like this...
+								</h1>
 								<Table>
 									<TableCaption className="text-muted">
 										Sample Statement Data
