@@ -44,18 +44,18 @@ func (a *AuthController) generateOTP() (string, error) {
 }
 
 func (a *AuthController) sendOTP(email string) error {
-	// 1) Generate otp
+	// 1) Generate OTP
 	otp, err := a.generateOTP()
 	if err != nil {
 		a.Logger.Error("Failed to generate otp", "error", err)
-		return fmt.Errorf("Failed to generate otp: %w", err)
+		return fmt.Errorf("failed to generate otp: %w", err)
 	}
 
-	// 2) Store otp
+	// 2) Store OTP
 	err = a.storeOTP(email, otp)
 	if err != nil {
 		a.Logger.Error("Failed to store otp", "error", err)
-		return fmt.Errorf("Failed to store otp: %w", err)
+		return fmt.Errorf("failed to store otp: %w", err)
 	}
 
 	// 3) Create new message
@@ -67,18 +67,38 @@ func (a *AuthController) sendOTP(email string) error {
 	message.SetHeader("Subject", "WealthScope One Time Password")
 	message.SetBody("text/plain", fmt.Sprintf("Your OTP code is: %s", otp))
 
-	// 5) Send the email
+	// 5) Convert port to int
 	port, err := strconv.Atoi(a.Port)
 	if err != nil {
 		a.Logger.Error("Failed to convert port to int", "error", err)
-		return fmt.Errorf("Failed to convert port: %w", err)
+		return fmt.Errorf("failed to convert port: %w", err)
 	}
 
-	dailer := gomail.NewDialer(a.Host, port, a.Username, a.Password)
+	// 6) Create a context with a timeout of 10 seconds
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	if err := dailer.DialAndSend(message); err != nil {
-		a.Logger.Error("Failed to send otp", "error", err)
-		return fmt.Errorf("Failed to send otp: %w", err)
+	// 7) Create a channel to handle the result of the email sending
+	done := make(chan error, 1)
+
+	// 8) Run the email sending in a goroutine
+	go func() {
+		dialer := gomail.NewDialer(a.Host, port, a.Username, a.Password)
+		done <- dialer.DialAndSend(message)
+	}()
+
+	// 9) Wait for either the email to be sent or the context to timeout
+	select {
+	case <-ctx.Done():
+		// Context timed out
+		a.Logger.Error("Failed to send OTP: timeout reached")
+		return fmt.Errorf("failed to send OTP: timeout reached")
+	case err := <-done:
+		// Email sending completed
+		if err != nil {
+			a.Logger.Error("Failed to send OTP", "error", err)
+			return fmt.Errorf("failed to send OTP: %w", err)
+		}
 	}
 
 	return nil

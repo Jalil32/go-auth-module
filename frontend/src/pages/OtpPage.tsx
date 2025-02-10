@@ -4,12 +4,24 @@ import {
 	InputOTPSeparator,
 	InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export function InputOtpPage() {
+	const location = useLocation();
+	const navigate = useNavigate();
+
+	const email = location.state?.email || "";
+
+	if (!location.state || email === "") {
+		navigate("/error");
+		return null;
+	}
+
 	return (
 		<div className="w-full h-screen overflow-y-hidden flex items-center justify-center flex-col space-y-6">
 			<p className="text-balance text-sm text-muted-foreground">
-				Enter your email and password below to login
+				Please enter the one time password send to {email}
 			</p>
 			<InputOTP maxLength={6}>
 				<InputOTPGroup>

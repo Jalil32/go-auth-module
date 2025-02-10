@@ -115,5 +115,5 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 	}
 
 	// 9) Redirect to the /dashboard page
-	c.Redirect(http.StatusFound, a.FrontendAddress+"/auth/otp")
+	c.Redirect(http.StatusFound, a.FrontendAddress+"/dashboard")
 }

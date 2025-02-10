@@ -179,5 +179,5 @@ func (a *AuthController) Register(c *gin.Context) {
 	}
 
 	// 10) Send success response
-	c.JSON(http.StatusOK, gin.H{"message": "User created and OTP sent successfully"})
+	c.JSON(http.StatusCreated, gin.H{"message": "User created and OTP sent successfully"})
 }

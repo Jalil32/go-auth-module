@@ -3,25 +3,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import axios from "axios";
-import { type ChangeEvent, type FormEvent, useState } from "react";
+import { useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
-interface FormData {
+type Inputs = {
 	email: string;
 	firstName: string;
 	lastName: string;
 	password: string;
-	passwordConfirm: string;
-}
-
-interface FormErrors {
-	submitError?: string;
-	firstName?: string;
-	lastName?: string;
-	email?: string;
-	password?: string;
-	passwordConfirm?: string;
-}
+	confirmPassword: string;
+};
 
 interface RegisterFormProps extends React.ComponentPropsWithoutRef<"form"> {
 	toggleMode: () => void;
@@ -33,88 +25,53 @@ export function RegisterForm({
 	...props
 }: RegisterFormProps) {
 	const navigate = useNavigate();
-	const [formData, setFormData] = useState<FormData>({
-		email: "",
-		firstName: "",
-		lastName: "",
-		password: "",
-		passwordConfirm: "",
-	});
-	const [errors, setErrors] = useState<FormErrors>({});
-
-	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-		const { name, value } = e.target;
-		setFormData((prev) => ({ ...prev, [name]: value }));
-	};
+	const {
+		register,
+		handleSubmit,
+		watch,
+		formState: { errors },
+	} = useForm<Inputs>();
+	const [submitError, setSubmitError] = useState<string | null>(null);
+	const [loading, setLoading] = useState(false);
+	const password = watch("password");
 
 	const handleGoogleAuth = async () => {
 		window.location.href = "/api/auth/google";
 		// will need backend to redirect to custom error page
 	};
 
-	const validateForm = (): boolean => {
-		const newErrors: FormErrors = {};
-
-		if (!formData.email) {
-			newErrors.email = "Email is required";
-		} else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-			newErrors.email = "Email address is invalid";
-		}
-
-		if (!formData.firstName) newErrors.firstName = "First name is required";
-		if (!formData.lastName) newErrors.lastName = "Last name is required";
-
-		if (!formData.password) {
-			newErrors.password = "Password is required";
-		} else if (formData.password.length < 8) {
-			newErrors.password = "Password must be at least 8 characters long";
-		}
-
-		if (!formData.passwordConfirm) {
-			newErrors.passwordConfirm = "Please confirm your password";
-		} else if (formData.passwordConfirm !== formData.password) {
-			newErrors.passwordConfirm = "Passwords do not match";
-		}
-
-		setErrors(newErrors);
-		return Object.keys(newErrors).length === 0;
-	};
-
-	const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-
-		if (!validateForm()) return;
-
+	const onSubmit: SubmitHandler<Inputs> = async (data) => {
+		setLoading(true);
 		try {
-			const res = await axios.post("/api/auth/register", formData);
-			setErrors({}); // Clear previous errors
+			const res = await axios.post("/api/auth/register", data);
 
 			if (res.status === 201) {
-				navigate("/dashboard");
+				navigate("/auth/otp", { state: { email: data.email } });
 			}
 		} catch (error) {
-			const newErrors: FormErrors = {};
-
 			if (axios.isAxiosError(error)) {
-				newErrors.submitError =
-					error.response?.status === 401
-						? "Invalid email or password"
-						: "Something went wrong. Please try again.";
-				newErrors.submitError =
-					error.response?.status === 409
-						? error.response?.data.error
-						: "Something went wrong. Please try again.";
+				if (error.response?.status === 400) {
+					setSubmitError("Invalid request");
+				} else if (error.response?.status === 401) {
+					setSubmitError("Invalid email or password");
+				} else if (error.response?.status === 409) {
+					setSubmitError(
+						"An account with this email already exists. Please sign in",
+					);
+				} else {
+					setSubmitError("Something went wrong. Please try again");
+				}
 			} else {
-				newErrors.submitError = "An unexpected error occurred.";
+				setSubmitError("An unexpected error occurred");
 			}
-
-			setErrors(newErrors);
+		} finally {
+			setLoading(false);
 		}
 	};
 
 	return (
 		<form
-			onSubmit={handleSubmit}
+			onSubmit={handleSubmit(onSubmit)}
 			className={cn("flex flex-col gap-6", className)}
 			{...props}
 		>
@@ -131,14 +88,18 @@ export function RegisterForm({
 						autoComplete="given-name webauthn"
 						id="firstName"
 						type="text"
-						name="firstName"
 						placeholder="John"
-						onChange={handleChange}
-						required
+						{...register("firstName", {
+							required: "First name is required",
+							pattern: {
+								value: /^[A-Za-z'-]+$/,
+								message: "First name is invalid",
+							},
+						})}
 					/>
 					{errors.firstName && (
 						<span className="text-sm text-red-500">
-							{errors.firstName}
+							{errors.firstName.message}
 						</span>
 					)}
 				</div>
@@ -148,14 +109,18 @@ export function RegisterForm({
 						autoComplete="family-name"
 						id="lastName"
 						type="text"
-						name="lastName"
 						placeholder="Doe"
-						onChange={handleChange}
-						required
+						{...register("lastName", {
+							required: "Last name is required",
+							pattern: {
+								value: /^[A-Za-z'-]+$/,
+								message: "Last name is invalid",
+							},
+						})}
 					/>
 					{errors.lastName && (
 						<span className="text-sm text-red-500">
-							{errors.lastName}
+							{errors.lastName.message}
 						</span>
 					)}
 				</div>
@@ -165,14 +130,18 @@ export function RegisterForm({
 						autoComplete="email"
 						id="email"
 						type="email"
-						name="email"
 						placeholder="ws@gmail.com"
-						onChange={handleChange}
-						required
+						{...register("email", {
+							required: "Email is required",
+							pattern: {
+								value: /\S+@\S+\.\S+/,
+								message: "Email address is invalid",
+							},
+						})}
 					/>
 					{errors.email && (
 						<span className="text-sm text-red-500">
-							{errors.email}
+							{errors.email.message}
 						</span>
 					)}
 				</div>
@@ -182,14 +151,19 @@ export function RegisterForm({
 					</div>
 					<Input
 						id="password"
-						name="password"
 						type="password"
-						onChange={handleChange}
-						required
+						{...register("password", {
+							required: "Password is required",
+							pattern: {
+								value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+								message:
+									"Password must be at least 8 characters long and include one uppercase letter, one lowercase letter, one number, and one special character",
+							},
+						})}
 					/>
 					{errors.password && (
 						<span className="text-sm text-red-500">
-							{errors.password}
+							{errors.password.message}
 						</span>
 					)}
 				</div>
@@ -201,24 +175,26 @@ export function RegisterForm({
 					</div>
 					<Input
 						id="confirmPassword"
-						name="passwordConfirm"
 						type="password"
-						onChange={handleChange}
-						required
+						{...register("confirmPassword", {
+							required: "Please confirm your password",
+							validate: (value) =>
+								value === password || "Passwords do not match",
+						})}
 					/>
-					{errors.passwordConfirm && (
+					{errors.confirmPassword && (
 						<span className="text-sm text-red-500">
-							{errors.passwordConfirm}
+							{errors.confirmPassword.message}
 						</span>
 					)}
-					{errors.submitError && (
+					{submitError && (
 						<span className="text-sm text-red-500">
-							{errors.submitError}
+							{submitError}
 						</span>
 					)}
 				</div>
-				<Button type="submit" className="w-full">
-					Signup
+				<Button type="submit" disabled={loading} className="w-full">
+					{loading ? "Signing up..." : "Signup"}
 				</Button>
 				<div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
 					<span className="relative z-10 bg-background px-2 text-muted-foreground">

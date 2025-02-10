@@ -27,7 +27,7 @@ func StartServer(cfg *config.Config, db *sqlx.DB, rdb *redis.Client, logger *slo
 
 	// Configure CORS
 	corsConfig := cors.Config{
-		AllowOrigins:     []string{cfg.Fly.Addr, cfg.Frontend.Addr, cfg.Backend.Addr},
+		AllowOrigins:     []string{"http://127.0.0.1:5173", "http://localhost:5173", cfg.Fly.Addr, cfg.Frontend.Addr, cfg.Backend.Addr},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},

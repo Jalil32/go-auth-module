@@ -24,29 +24,43 @@ export function LoginForm({ className, toggleMode, ...props }: LoginFormProps) {
 		formState: { errors },
 	} = useForm<Inputs>();
 	const [submitError, setSubmitError] = useState<string | null>(null);
+	const [loading, setLoading] = useState(false);
 
 	const handleGoogleAuth = async () => {
 		window.location.href = "/api/auth/google";
 	};
 
 	const onSubmit: SubmitHandler<Inputs> = async (data) => {
+		setLoading(true);
 		try {
 			const res = await axios.post("/api/auth/login", data);
 
 			if (res.status === 200) {
-				console.log("Login Successful");
 				navigate("/dashboard");
 			}
-		} catch (error: unknown) {
+		} catch (error) {
 			if (axios.isAxiosError(error)) {
+				console.log(error.response);
 				if (error.response?.status === 401) {
-					setSubmitError("Invalid email or password");
+					if (
+						error.response?.data?.message ===
+						"User is not verified."
+					) {
+						setSubmitError(
+							"Please verify your email to access the application",
+						);
+						navigate("/auth/otp", { state: { email: data.email } });
+					} else {
+						setSubmitError("Invalid email or password");
+					}
 				} else {
-					setSubmitError("Something went wrong. Please try again.");
+					setSubmitError("Something went wrong. Please try again");
 				}
 			} else {
-				setSubmitError("An unexpected error occurred.");
+				setSubmitError("An unexpected error occurred");
 			}
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -66,6 +80,7 @@ export function LoginForm({ className, toggleMode, ...props }: LoginFormProps) {
 				<div className="grid gap-2">
 					<Label htmlFor="email">Email</Label>
 					<Input
+						autoComplete="email"
 						id="email"
 						type="email"
 						placeholder="ws@gmail.com"
@@ -87,7 +102,7 @@ export function LoginForm({ className, toggleMode, ...props }: LoginFormProps) {
 					<div className="flex items-center">
 						<Label htmlFor="password">Password</Label>
 						<a
-							href="test"
+							href="/forgotpassword"
 							className="ml-auto text-sm underline-offset-4 hover:underline"
 						>
 							Forgot your password?
@@ -111,8 +126,8 @@ export function LoginForm({ className, toggleMode, ...props }: LoginFormProps) {
 						</span>
 					)}
 				</div>
-				<Button type="submit" className="w-full">
-					Login
+				<Button type="submit" disabled={loading} className="w-full">
+					{loading ? "Logging in..." : "Login"}
 				</Button>
 				<div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
 					<span className="relative z-10 bg-background px-2 text-muted-foreground">
