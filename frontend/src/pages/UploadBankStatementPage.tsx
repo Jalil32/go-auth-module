@@ -158,7 +158,7 @@ const UploadBankStatementPage = () => {
 							</Button>
 						</div>
 						{fileError ? (
-							<p className="text-xs text-destructive">
+							<p className="text-xs text-destructive text-center">
 								{fileError}
 							</p>
 						) : (
