@@ -73,7 +73,13 @@ const UploadBankStatementPage = () => {
 		setDropdownValue([]);
 
 		const file = event.target.files?.[0];
-		if (!file || !SUPPORTED_FILE_TYPES.includes(file.type)) {
+
+		if (!file) {
+			setFileError("No file selected - Please select a file to upload.");
+			return;
+		}
+
+		if (!SUPPORTED_FILE_TYPES.includes(file.type)) {
 			setFileError(
 				`Invalid file type - Please select a file of type: ${SUPPORTED_FILE_TYPES.join(
 					", ",
