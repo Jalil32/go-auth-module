@@ -58,26 +58,40 @@ const SAMPLE_STATEMENT_DATA = [
 ];
 
 const UploadBankStatementPage = () => {
+	const [file, setFile] = useState<File | null>(null);
 	const [statementData, setStatementData] = useState<string[][]>([]);
-	const [selectedHeaders, setSelectedHeaders] = useState<{
-		[key: number]: string;
-	}>({});
+	const [previewData, setPreviewData] = useState<string[][]>([]);
 
-	const uploadHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const selectFileHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
 		if (!file || !SUPPORTED_FILE_TYPES.includes(file.type)) {
-			// TODO: Add error notification here
+			// TODO: Add error notification here: File type not supported
 			return;
 		}
 
-		Papa.parse(file, {
-			header: false,
-			skipEmptyLines: true,
-			preview: NUM_ROWS_TO_PREVIEW,
-			complete: (results) => {
-				setStatementData(results.data as string[][]);
-			},
-		});
+		setFile(file);
+	};
+
+	const uploadFileHandler = () => {
+		if (file) {
+			Papa.parse(file, {
+				header: false,
+				skipEmptyLines: true,
+				complete: (results) => {
+					setStatementData(results.data as string[][]);
+					const previewData = results.data.slice(
+						0,
+						NUM_ROWS_TO_PREVIEW,
+					);
+					setPreviewData(previewData as string[][]);
+				},
+				error: (error) => {
+					// TODO: Add error notification here: Error parsing file
+				},
+			});
+		} else {
+			// TODO: Add error notification here: No file selected
+		}
 	};
 
 	const bankStatementUpload = (
@@ -94,13 +108,24 @@ const UploadBankStatementPage = () => {
 						</p>
 					</div>
 					<div className="flex flex-col items-center justify-center space-y-2">
-						<Input
-							id="csv"
-							type="file"
-							accept=".csv"
-							onChange={uploadHandler}
-							className="max-w-lg"
-						/>
+						<div className="flex flex-row space-x-2">
+							<Input
+								id="csv"
+								type="file"
+								accept=".csv"
+								className="max-w-lg cursor-pointer"
+								onChange={selectFileHandler}
+							/>
+							<Button
+								variant="default"
+								size="default"
+								onClick={() => {
+									uploadFileHandler();
+								}}
+							>
+								Upload File
+							</Button>
+						</div>
 						<p className="text-xs">Supported file types: .csv</p>
 					</div>
 				</div>
@@ -120,10 +145,11 @@ const UploadBankStatementPage = () => {
 											<DropdownMenu>
 												<DropdownMenuTrigger asChild>
 													<Button variant="ghost">
+														Header
 														<ChevronDown />
 													</Button>
 												</DropdownMenuTrigger>
-												<DropdownMenuContent>
+												<DropdownMenuContent classname="bg-white">
 													<DropdownMenuRadioGroup>
 														{Object.values(
 															HEADER_OPTIONS,
@@ -132,17 +158,7 @@ const UploadBankStatementPage = () => {
 																key={option}
 																value={option}
 															>
-																<DropdownMenuItem
-																	onSelect={() =>
-																		setSelectedHeaders(
-																			{
-																				...selectedHeaders,
-																				[index]:
-																					option,
-																			},
-																		)
-																	}
-																>
+																<DropdownMenuItem>
 																	{option}
 																</DropdownMenuItem>
 															</DropdownMenuRadioItem>
@@ -155,7 +171,7 @@ const UploadBankStatementPage = () => {
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{statementData.map((row, rowIndex) => (
+								{previewData.map((row, rowIndex) => (
 									<TableRow key={rowIndex}>
 										{row.map((cell, cellIndex) => (
 											<TableCell
