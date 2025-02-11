@@ -1,4 +1,13 @@
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuLabel,
+	DropdownMenuRadioGroup,
+	DropdownMenuRadioItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -10,14 +19,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuRadioGroup,
-	DropdownMenuRadioItem,
-	DropdownMenuTrigger,
-} from "@radix-ui/react-dropdown-menu";
 import { ChevronDown, Eye, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { useState } from "react";
@@ -61,6 +62,7 @@ const UploadBankStatementPage = () => {
 	const [file, setFile] = useState<File | null>(null);
 	const [statementData, setStatementData] = useState<string[][]>([]);
 	const [previewData, setPreviewData] = useState<string[][]>([]);
+	const [dropdownValue, setDropdownValue] = useState<string[]>([]);
 
 	const selectFileHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -135,39 +137,81 @@ const UploadBankStatementPage = () => {
 						orientation="horizontal"
 					/>
 				</div>
-				<div className="flex-1 m-5">
+				<div className="flex-1 m-5 max-w-[80vw] overflow-auto">
 					{statementData.length > 0 ? (
 						<Table>
 							<TableHeader>
 								<TableRow>
-									{statementData[0].map((_, index) => (
-										<TableHead key={index}>
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<Button variant="ghost">
-														Header
-														<ChevronDown />
-													</Button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent classname="bg-white">
-													<DropdownMenuRadioGroup>
-														{Object.values(
-															HEADER_OPTIONS,
-														).map((option) => (
-															<DropdownMenuRadioItem
-																key={option}
-																value={option}
-															>
-																<DropdownMenuItem>
-																	{option}
-																</DropdownMenuItem>
-															</DropdownMenuRadioItem>
-														))}
-													</DropdownMenuRadioGroup>
-												</DropdownMenuContent>
-											</DropdownMenu>
-										</TableHead>
-									))}
+									{statementData[0].map((_, index) => {
+										return (
+											<TableHead key={index}>
+												<DropdownMenu>
+													<DropdownMenuTrigger
+														asChild
+													>
+														<Button
+															variant="ghost"
+															className="w-20"
+														>
+															{dropdownValue[
+																index
+															] || "Options"}
+															<ChevronDown />
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent className="w-56">
+														<DropdownMenuLabel>
+															Select Header
+														</DropdownMenuLabel>
+														<DropdownMenuSeparator />
+														<DropdownMenuRadioGroup
+															value={
+																dropdownValue[
+																	index
+																]
+															}
+															onValueChange={(
+																value: string,
+															) => {
+																const newDropdownValue =
+																	[
+																		...dropdownValue,
+																	];
+																newDropdownValue[
+																	index
+																] = value;
+																setDropdownValue(
+																	newDropdownValue,
+																);
+															}}
+														>
+															{Object.values(
+																HEADER_OPTIONS,
+															).map(
+																(
+																	headerOption,
+																	headerOptionIndex,
+																) => (
+																	<DropdownMenuRadioItem
+																		key={
+																			headerOptionIndex
+																		}
+																		value={
+																			headerOption
+																		}
+																	>
+																		{
+																			headerOption
+																		}
+																	</DropdownMenuRadioItem>
+																),
+															)}
+														</DropdownMenuRadioGroup>
+													</DropdownMenuContent>
+												</DropdownMenu>
+											</TableHead>
+										);
+									})}
 								</TableRow>
 							</TableHeader>
 							<TableBody>
@@ -204,19 +248,6 @@ const UploadBankStatementPage = () => {
 									<TableCaption className="text-muted">
 										Sample Statement Data
 									</TableCaption>
-									<TableHeader>
-										<TableRow>
-											<TableHead className="text-muted">
-												{HEADER_OPTIONS.DATE}
-											</TableHead>
-											<TableHead className="text-muted">
-												{HEADER_OPTIONS.AMOUNT}
-											</TableHead>
-											<TableHead className="text-muted">
-												{HEADER_OPTIONS.DESCRIPTION}
-											</TableHead>
-										</TableRow>
-									</TableHeader>
 									<TableBody>
 										{SAMPLE_STATEMENT_DATA.map(
 											(statement, index) => (
