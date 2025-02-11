@@ -96,6 +96,19 @@ const UploadBankStatementPage = () => {
 		}
 	};
 
+	const changeHeaderHandler = (index: number, value: string) => {
+		const newDropdownValue = [...dropdownValue];
+		const existingIndex = newDropdownValue.indexOf(value); // Check if the value is already selected
+
+		// If the value is already selected, remove it from the previous index
+		if (existingIndex !== -1) {
+			newDropdownValue[existingIndex] = "";
+		}
+
+		newDropdownValue[index] = value;
+		setDropdownValue(newDropdownValue);
+	};
+
 	const bankStatementUpload = (
 		<div className="flex flex-1 p-4 pt-0">
 			<div className="flex flex-col flex-1 rounded-xl bg-muted/50 space-y-4">
@@ -173,15 +186,9 @@ const UploadBankStatementPage = () => {
 															onValueChange={(
 																value: string,
 															) => {
-																const newDropdownValue =
-																	[
-																		...dropdownValue,
-																	];
-																newDropdownValue[
-																	index
-																] = value;
-																setDropdownValue(
-																	newDropdownValue,
+																changeHeaderHandler(
+																	index,
+																	value,
 																);
 															}}
 														>
