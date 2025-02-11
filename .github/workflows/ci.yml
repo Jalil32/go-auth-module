@@ -25,11 +25,11 @@ jobs:
 
     # Install and test Go backend
     - name: Install dependencies for Go
-      working-directory: ./backend # Adjust to your React frontend directory
+      working-directory: ./backend # Adjust to your Go backend directory
       run: go mod tidy
 
     - name: Test Go backend
-      working-directory: ./backend # Adjust to your React frontend directory
+      working-directory: ./backend # Adjust to your Go backend directory
       run: go test ./tests
 
     # Set up Node.js for React
@@ -50,6 +50,11 @@ jobs:
     - name: Format using biome
       working-directory: ./frontend
       run: ~/.bun/bin/bunx biome format --write ./src
+
+    # Lint the front end code
+    - name: Lint using biome
+      working-directory: ./frontend
+      run: ~/.bun/bin/bunx biome lint ./src
 
     # Build React frontend
     - name: Build React frontend
