@@ -74,7 +74,7 @@ const UploadBankStatementPage = () => {
 		setFile(file);
 	};
 
-	const uploadFileHandler = () => {
+	const previewFileHandler = () => {
 		if (file) {
 			Papa.parse(file, {
 				header: false,
@@ -109,6 +109,8 @@ const UploadBankStatementPage = () => {
 		setDropdownValue(newDropdownValue);
 	};
 
+	const uploadFileHandler = () => {};
+
 	const bankStatementUpload = (
 		<div className="flex flex-1 p-4 pt-0">
 			<div className="flex flex-col flex-1 rounded-xl bg-muted/50 space-y-4">
@@ -132,13 +134,13 @@ const UploadBankStatementPage = () => {
 								onChange={selectFileHandler}
 							/>
 							<Button
-								variant="default"
+								variant="secondary"
 								size="default"
 								onClick={() => {
-									uploadFileHandler();
+									previewFileHandler();
 								}}
 							>
-								Upload File
+								Preview File
 							</Button>
 						</div>
 						<p className="text-xs">Supported file types: .csv</p>
@@ -150,95 +152,116 @@ const UploadBankStatementPage = () => {
 						orientation="horizontal"
 					/>
 				</div>
-				<div className="flex-1 m-5 max-w-[80vw] overflow-auto">
+				<div className="flex-1 m-5 max-w-[80vw]">
 					{statementData.length > 0 ? (
-						<Table>
-							<TableHeader>
-								<TableRow>
-									{statementData[0].map((_, index) => {
-										return (
-											<TableHead key={index}>
-												<DropdownMenu>
-													<DropdownMenuTrigger
-														asChild
-													>
-														<Button
-															variant="ghost"
-															className="w-20"
+						<div className="flex flex-col items-center space-y-5">
+							<p className="text-sm">
+								Preview of the uploaded bank statement is shown
+								below. Allocate the headers:{" "}
+								<span className="font-semibold italic">
+									Date, Description, Amount
+								</span>{" "}
+								to the respective columns to upload your
+								transaction data.
+							</p>
+							<Table>
+								<TableHeader>
+									<TableRow>
+										{statementData[0].map((_, index) => {
+											return (
+												<TableHead key={index}>
+													<DropdownMenu>
+														<DropdownMenuTrigger
+															asChild
 														>
-															{dropdownValue[
-																index
-															] || "Options"}
-															<ChevronDown />
-														</Button>
-													</DropdownMenuTrigger>
-													<DropdownMenuContent className="w-56">
-														<DropdownMenuLabel>
-															Select Header
-														</DropdownMenuLabel>
-														<DropdownMenuSeparator />
-														<DropdownMenuRadioGroup
-															value={
-																dropdownValue[
+															<Button
+																variant="ghost"
+																className="w-20"
+															>
+																{dropdownValue[
 																	index
-																]
-															}
-															onValueChange={(
-																value: string,
-															) => {
-																changeHeaderHandler(
-																	index,
-																	value,
-																);
-															}}
-														>
-															{Object.values(
-																HEADER_OPTIONS,
-															).map(
-																(
-																	headerOption,
-																	headerOptionIndex,
-																) => (
-																	<DropdownMenuRadioItem
-																		key={
-																			headerOptionIndex
-																		}
-																		value={
-																			headerOption
-																		}
-																	>
-																		{
-																			headerOption
-																		}
-																	</DropdownMenuRadioItem>
-																),
-															)}
-														</DropdownMenuRadioGroup>
-													</DropdownMenuContent>
-												</DropdownMenu>
-											</TableHead>
-										);
-									})}
-								</TableRow>
-							</TableHeader>
-							<TableBody>
-								{previewData.map((row, rowIndex) => (
-									<TableRow key={rowIndex}>
-										{row.map((cell, cellIndex) => (
-											<TableCell
-												key={cellIndex}
-												className="p-0 md:p-3"
-											>
-												{cell}
-											</TableCell>
-										))}
+																] || "Options"}
+																<ChevronDown />
+															</Button>
+														</DropdownMenuTrigger>
+														<DropdownMenuContent className="w-56">
+															<DropdownMenuLabel>
+																Select Header
+															</DropdownMenuLabel>
+															<DropdownMenuSeparator />
+															<DropdownMenuRadioGroup
+																value={
+																	dropdownValue[
+																		index
+																	]
+																}
+																onValueChange={(
+																	value: string,
+																) => {
+																	changeHeaderHandler(
+																		index,
+																		value,
+																	);
+																}}
+															>
+																{Object.values(
+																	HEADER_OPTIONS,
+																).map(
+																	(
+																		headerOption,
+																		headerOptionIndex,
+																	) => (
+																		<DropdownMenuRadioItem
+																			key={
+																				headerOptionIndex
+																			}
+																			value={
+																				headerOption
+																			}
+																		>
+																			{
+																				headerOption
+																			}
+																		</DropdownMenuRadioItem>
+																	),
+																)}
+															</DropdownMenuRadioGroup>
+														</DropdownMenuContent>
+													</DropdownMenu>
+												</TableHead>
+											);
+										})}
 									</TableRow>
-								))}
-							</TableBody>
-							<TableCaption>
-								Preview of the first {NUM_ROWS_TO_PREVIEW} rows
-							</TableCaption>
-						</Table>
+								</TableHeader>
+								<TableBody>
+									{previewData.map((row, rowIndex) => (
+										<TableRow key={rowIndex}>
+											{row.map((cell, cellIndex) => (
+												<TableCell
+													key={cellIndex}
+													className="p-0 md:p-3"
+												>
+													{cell}
+												</TableCell>
+											))}
+										</TableRow>
+									))}
+								</TableBody>
+								<TableCaption>
+									Preview of the first {NUM_ROWS_TO_PREVIEW}{" "}
+									rows
+								</TableCaption>
+							</Table>
+							<Button
+								variant="default"
+								size="default"
+								onClick={() => {
+									uploadFileHandler();
+								}}
+							>
+								Save & Upload File
+							</Button>
+						</div>
 					) : (
 						<div className="flex flex-col justify-center items-center h-full text-muted space-y-10">
 							<div className="flex flex-col justify-center items-center space-y-2">
