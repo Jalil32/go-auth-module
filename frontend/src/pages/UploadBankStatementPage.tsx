@@ -63,14 +63,26 @@ const UploadBankStatementPage = () => {
 	const [statementData, setStatementData] = useState<string[][]>([]);
 	const [previewData, setPreviewData] = useState<string[][]>([]);
 	const [dropdownValue, setDropdownValue] = useState<string[]>([]);
+	const [fileError, setFileError] = useState<string | null>(null);
 
 	const selectFileHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+		// Reset the file, statement data, preview data, and dropdown value when a new file is selected
+		setFile(null);
+		setStatementData([]);
+		setPreviewData([]);
+		setDropdownValue([]);
+
 		const file = event.target.files?.[0];
 		if (!file || !SUPPORTED_FILE_TYPES.includes(file.type)) {
-			// TODO: Add error notification here: File type not supported
+			setFileError(
+				`Invalid file type - Please select a file of type: ${SUPPORTED_FILE_TYPES.join(
+					", ",
+				)}.`,
+			);
 			return;
 		}
 
+		setFileError(null);
 		setFile(file);
 	};
 
@@ -86,13 +98,14 @@ const UploadBankStatementPage = () => {
 						NUM_ROWS_TO_PREVIEW,
 					);
 					setPreviewData(previewData as string[][]);
+					setFileError(null);
 				},
 				error: (error) => {
-					// TODO: Add error notification here: Error parsing file
+					setFileError(
+						"An error occurred while parsing the file - Please try again.",
+					);
 				},
 			});
-		} else {
-			// TODO: Add error notification here: No file selected
 		}
 	};
 
@@ -139,10 +152,18 @@ const UploadBankStatementPage = () => {
 								onClick={() => {
 									previewFileHandler();
 								}}
+								{...(file ? {} : { disabled: true })}
 							>
 								Preview File
 							</Button>
 						</div>
+						{fileError ? (
+							<p className="text-xs text-destructive">
+								{fileError}
+							</p>
+						) : (
+							"\u200b" // Zero-width space character to leave space for the error message - Prevents layout shift
+						)}
 						<p className="text-xs">Supported file types: .csv</p>
 					</div>
 				</div>
