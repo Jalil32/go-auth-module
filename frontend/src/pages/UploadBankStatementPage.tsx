@@ -152,9 +152,9 @@ const UploadBankStatementPage = () => {
 						orientation="horizontal"
 					/>
 				</div>
-				<div className="flex-1 m-5 max-w-[80vw]">
+				<div className="flex flex-1 justify-center m-5">
 					{statementData.length > 0 ? (
-						<div className="flex flex-col items-center space-y-5">
+						<div className="flex flex-col items-center space-y-5 overflow-auto max-w-[80vw]">
 							<p className="text-sm">
 								Preview of the uploaded bank statement is shown
 								below. Allocate the headers:{" "}
