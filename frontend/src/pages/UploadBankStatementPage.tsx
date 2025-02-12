@@ -19,6 +19,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import axios from "axios";
 import { ChevronDown, Eye, Upload } from "lucide-react";
 import Papa from "papaparse";
 import { useState } from "react";
@@ -66,12 +67,18 @@ const UploadBankStatementPage = () => {
 	const [fileError, setFileError] = useState<string | null>(null);
 	const [previewError, setPreviewError] = useState<string | null>(null);
 
-	const selectFileHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
-		// Reset the file, statement data, preview data, and dropdown value when a new file is selected
+	const resetUploadPage = () => {
 		setFile(null);
 		setStatementData([]);
 		setPreviewData([]);
 		setDropdownValue([]);
+		setFileError(null);
+		setPreviewError(null);
+	};
+
+	const selectFileHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+		// Reset everything when a new file is selected
+		resetUploadPage();
 
 		const file = event.target.files?.[0];
 
@@ -155,7 +162,7 @@ const UploadBankStatementPage = () => {
 		return unusedHeaders;
 	};
 
-	const uploadFileHandler = () => {
+	const uploadFileHandler = async () => {
 		const dataWithHeaders = attachHeadersToData();
 		console.log(dataWithHeaders);
 
@@ -165,8 +172,20 @@ const UploadBankStatementPage = () => {
 			setPreviewError(
 				`Failed to allocate headers: ${unusedHeaders.join(", ")}.`,
 			);
+			return;
 		}
+
 		setPreviewError(null);
+
+		try {
+			const response = await axios.post("/api/bank/upload", {
+				data: dataWithHeaders,
+			});
+			// TODO: Add toastify notification for successful response
+			resetUploadPage();
+		} catch (error) {
+			// TODO: Add toastify notification for failed response
+		}
 	};
 
 	const bankStatementUpload = (
