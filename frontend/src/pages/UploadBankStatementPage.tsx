@@ -64,6 +64,7 @@ const UploadBankStatementPage = () => {
 	const [previewData, setPreviewData] = useState<string[][]>([]);
 	const [dropdownValue, setDropdownValue] = useState<string[]>([]);
 	const [fileError, setFileError] = useState<string | null>(null);
+	const [previewError, setPreviewError] = useState<string | null>(null);
 
 	const selectFileHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
 		// Reset the file, statement data, preview data, and dropdown value when a new file is selected
@@ -89,6 +90,7 @@ const UploadBankStatementPage = () => {
 		}
 
 		setFileError(null);
+		setPreviewError(null);
 		setFile(file);
 	};
 
@@ -104,6 +106,10 @@ const UploadBankStatementPage = () => {
 						NUM_ROWS_TO_PREVIEW,
 					);
 					setPreviewData(previewData as string[][]);
+					setDropdownValue(
+						new Array((results.data as string[][])[0].length),
+					); // Initialize the dropdown value array with the number of columns
+
 					setFileError(null);
 				},
 				error: (error) => {
@@ -128,7 +134,40 @@ const UploadBankStatementPage = () => {
 		setDropdownValue(newDropdownValue);
 	};
 
-	const uploadFileHandler = () => {};
+	const attachHeadersToData = () => {
+		const headers = dropdownValue; // Get the headers from the dropdown value
+		const dataWithHeaders = [headers, ...statementData]; // Attach the headers to the statement data
+
+		return dataWithHeaders;
+	};
+
+	const findUnusedHeaders = () => {
+		const usedHeaders = dropdownValue;
+		const unusedHeaders = [];
+		const requiredHeaders = Object.values(HEADER_OPTIONS);
+
+		for (const header of requiredHeaders) {
+			if (!usedHeaders.includes(header)) {
+				unusedHeaders.push(header); // If a required header has not been allocated, add to unused headers array
+			}
+		}
+
+		return unusedHeaders;
+	};
+
+	const uploadFileHandler = () => {
+		const dataWithHeaders = attachHeadersToData();
+		console.log(dataWithHeaders);
+
+		const unusedHeaders = findUnusedHeaders();
+		if (unusedHeaders.length > 0) {
+			// If one or more required headers are unallocated
+			setPreviewError(
+				`Failed to allocate headers: ${unusedHeaders.join(", ")}.`,
+			);
+		}
+		setPreviewError(null);
+	};
 
 	const bankStatementUpload = (
 		<div className="flex flex-1 p-4 pt-0">
@@ -288,6 +327,11 @@ const UploadBankStatementPage = () => {
 							>
 								Save & Upload File
 							</Button>
+							{previewError && (
+								<p className="text-xs text-destructive text-center">
+									{previewError}
+								</p>
+							)}
 						</div>
 					) : (
 						<div className="flex flex-col justify-center items-center h-full text-muted space-y-10">
