@@ -15,7 +15,6 @@ import (
 func (a *AuthController) hashPassword(password string) (string, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		a.Logger.Error("Failed to hash password", "error", err)
 		return "", fmt.Errorf("Failed to hash password: %w", err)
 	}
 	return string(hashedPassword), nil
@@ -47,14 +46,12 @@ func (a *AuthController) sendOTP(email string) error {
 	// 1) Generate OTP
 	otp, err := a.generateOTP()
 	if err != nil {
-		a.Logger.Error("Failed to generate otp", "error", err)
 		return fmt.Errorf("failed to generate otp: %w", err)
 	}
 
 	// 2) Store OTP
 	err = a.storeOTP(email, otp)
 	if err != nil {
-		a.Logger.Error("Failed to store otp", "error", err)
 		return fmt.Errorf("failed to store otp: %w", err)
 	}
 
@@ -70,7 +67,6 @@ func (a *AuthController) sendOTP(email string) error {
 	// 5) Convert port to int
 	port, err := strconv.Atoi(a.Port)
 	if err != nil {
-		a.Logger.Error("Failed to convert port to int", "error", err)
 		return fmt.Errorf("failed to convert port: %w", err)
 	}
 
@@ -91,13 +87,55 @@ func (a *AuthController) sendOTP(email string) error {
 	select {
 	case <-ctx.Done():
 		// Context timed out
-		a.Logger.Error("Failed to send OTP: timeout reached")
 		return fmt.Errorf("failed to send OTP: timeout reached")
 	case err := <-done:
 		// Email sending completed
 		if err != nil {
-			a.Logger.Error("Failed to send OTP", "error", err)
 			return fmt.Errorf("failed to send OTP: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (a *AuthController) sendForgotPasswordToken(email string, link string) error {
+	// 1) Create new message
+	message := gomail.NewMessage()
+
+	// 2) Set email headers
+	message.SetHeader("From", "team@demomailtrap.com")
+	message.SetHeader("To", email)
+	message.SetHeader("Subject", "Forgot Password")
+	message.SetBody("text/plain", fmt.Sprintf("Please click the link to reset your password: %s", link))
+
+	// 3) Convert port to int
+	port, err := strconv.Atoi(a.Port)
+	if err != nil {
+		return fmt.Errorf("failed to convert port: %w", err)
+	}
+
+	// 4) Create a context with a timeout of 10 seconds
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// 5) Create a channel to handle the result of the email sending
+	done := make(chan error, 1)
+
+	// 6) Run the email sending in a goroutine
+	go func() {
+		dialer := gomail.NewDialer(a.Host, port, a.Username, a.Password)
+		done <- dialer.DialAndSend(message)
+	}()
+
+	// 7) Wait for either the email to be sent or the context to timeout
+	select {
+	case <-ctx.Done():
+		// Context timed out
+		return fmt.Errorf("failed to send forgot password link: timeout reached")
+	case err := <-done:
+		// Email sending completed
+		if err != nil {
+			return fmt.Errorf("failed to send forgot password link: %w", err)
 		}
 	}
 
