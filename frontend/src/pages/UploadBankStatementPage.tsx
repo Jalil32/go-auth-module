@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/components/constants/http";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -163,9 +164,6 @@ const UploadBankStatementPage = () => {
 	};
 
 	const uploadFileHandler = async () => {
-		const dataWithHeaders = attachHeadersToData();
-		console.log(dataWithHeaders);
-
 		const unusedHeaders = findUnusedHeaders();
 		if (unusedHeaders.length > 0) {
 			// If one or more required headers are unallocated
@@ -178,13 +176,22 @@ const UploadBankStatementPage = () => {
 		setPreviewError(null);
 
 		try {
-			const response = await axios.post("/api/bank/upload", {
-				data: dataWithHeaders,
-			});
+			const dataWithHeadersJson = JSON.stringify(attachHeadersToData());
+			console.log(dataWithHeadersJson);
+			const response = await axios.post(
+				`${API_BASE_URL}/api/bank/upload`,
+				dataWithHeadersJson,
+				{
+					headers: {
+						"Content-Type": "application/json",
+					},
+				},
+			);
 			// TODO: Add toastify notification for successful response
 			resetUploadPage();
 		} catch (error) {
 			// TODO: Add toastify notification for failed response
+			console.log(error);
 		}
 	};
 
