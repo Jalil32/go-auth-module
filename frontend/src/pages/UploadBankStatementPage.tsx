@@ -176,11 +176,10 @@ const UploadBankStatementPage = () => {
 		setPreviewError(null);
 
 		try {
-			const dataWithHeadersJson = JSON.stringify(attachHeadersToData());
-			console.log(dataWithHeadersJson);
+			const dataWithHeaders = attachHeadersToData();
 			const response = await axios.post(
 				`${API_BASE_URL}/api/bank/upload`,
-				dataWithHeadersJson,
+				dataWithHeaders,
 				{
 					headers: {
 						"Content-Type": "application/json",
@@ -191,7 +190,6 @@ const UploadBankStatementPage = () => {
 			resetUploadPage();
 		} catch (error) {
 			// TODO: Add toastify notification for failed response
-			console.log(error);
 		}
 	};
 
