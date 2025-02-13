@@ -3,6 +3,7 @@ import "./index.css";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import { Landing } from "./pages/Landing";
+import UploadBankStatementPage from "./pages/UploadBankStatementPage";
 
 const router = createBrowserRouter([
 	{
@@ -16,6 +17,10 @@ const router = createBrowserRouter([
 	{
 		path: "/dashboard",
 		element: <Dashboard />,
+	},
+	{
+		path: "/upload-bank-statement",
+		element: <UploadBankStatementPage />,
 	},
 ]);
 
