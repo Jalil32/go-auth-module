@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import ErrorPage from "./pages/ErrorPage";
 import { Landing } from "./pages/Landing";
 import { InputOtpPage } from "./pages/OtpPage";
+import UploadBankStatementPage from "./pages/UploadBankStatementPage";
 
 const router = createBrowserRouter([
 	{
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
 	{
 		path: "*",
 		element: <ErrorPage />,
+	},
+	{
+		path: "/upload-bank-statement",
+		element: <UploadBankStatementPage />,
 	},
 ]);
 
