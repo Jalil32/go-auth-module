@@ -25,6 +25,7 @@ type Config struct {
 
 type BackendConfig struct {
 	Addr string
+	Port string
 }
 
 type FlyConfig struct {
@@ -75,6 +76,7 @@ func LoadConfig() (*Config, error) {
 		},
 		Backend: BackendConfig{
 			Addr: os.Getenv("CLIENT_PROXY"),
+			Port: os.Getenv("BACKEND_PORT"),
 		},
 		Fly: FlyConfig{
 			Addr: os.Getenv("CLIENT_FLY"),

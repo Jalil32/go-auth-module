@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -125,7 +126,7 @@ func (a *AuthController) Register(c *gin.Context) {
 	}
 
 	if existingUser != nil {
-		a.HandleError(c, http.StatusConflict, "User with this email already exists.", "User already exists in db", nil)
+		a.HandleError(c, http.StatusConflict, "User with this email already exists.", "User already exists in db", errors.New("User already exists in db"))
 		return
 	}
 
