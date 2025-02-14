@@ -1,9 +1,8 @@
 package auth
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
-	"wealthscope/backend/internal/db"
 	"wealthscope/backend/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -12,53 +11,75 @@ import (
 
 // SignInWithProvider handles third-party sign-in using a provider (e.g., Google)
 func (a *AuthController) SignInWithProvider(c *gin.Context) {
+	// 1) Check that provider exists
 	provider := c.Param("provider")
 	if provider == "" {
-		a.Logger.Error("Provider not specified", "error", "Provider missing in URL")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Provider not specified"})
+		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Provider not specified", errors.New("Provider not specified"))
 		return
 	}
 
-	// Add provider to the request URL
+	// 2) Validate provider
+	allowedProviders := map[string]bool{
+		"google": true,
+	}
+	if !allowedProviders[provider] {
+		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Invalid provider specified", errors.New("Invalid provider specified"))
+		return
+	}
+
+	// 3) Add provider to the request URL
 	q := c.Request.URL.Query()
 	q.Add("provider", provider)
 	c.Request.URL.RawQuery = q.Encode()
 
-	// Begin OAuth flow
+	// 4) Begin OAuth flow
 	a.Logger.Info("Starting OAuth flow", "provider", provider)
 	gothic.BeginAuthHandler(c.Writer, c.Request)
 }
 
-// CallbackHandler handles the OAuth callback and user creation
 func (a *AuthController) CallbackHandler(c *gin.Context) {
+	// 1) Check that the provider exists
 	provider := c.Param("provider")
 	if provider == "" {
-		a.Logger.Error("Provider not specified", "error", "Provider missing in URL")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Provider not specified"})
+		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Provider not specified", errors.New(("Provider not specified")))
 		return
 	}
 
-	// Add provider to the request URL
+	// 2) Add provider to the request URL
 	q := c.Request.URL.Query()
 	q.Add("provider", provider)
 	c.Request.URL.RawQuery = q.Encode()
 
 	oauthUser, err := gothic.CompleteUserAuth(c.Writer, c.Request)
 	if err != nil {
-		a.Logger.Error("OAuth complete error", "provider", provider, "error", err)
-		c.AbortWithError(http.StatusInternalServerError, fmt.Errorf("OAuth complete error: %w", err))
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "OAuth complete error", err)
 		return
 	}
 
-	// Check if the user exists in the database
-	existingUser, err := db.FindUserByEmail(a.DB, oauthUser.Email)
+	// 3) Check if the user exists in the database
+	existingUser, err := a.UserDB.FindUserByEmail(oauthUser.Email)
 	if err != nil {
-		a.Logger.Error("Database error during user lookup", "error", err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Database error during user lookup"})
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Database error during lookup", err)
 		return
 	}
 
-	// Create a new user if not found
+	// 4) Start transaction
+	tx, err := a.UserDB.Beginx()
+	if err != nil {
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to start transaction", err)
+		return
+	}
+
+	// Defer rollback in case of failure
+	defer func() {
+		if err != nil {
+			if rbErr := tx.Rollback(); rbErr != nil {
+				a.Logger.Error("Failed to rollback transaction", "error", err)
+			}
+		}
+	}()
+
+	// 5) If user does not exist, create user and set verified to true
 	var user *models.User
 	if existingUser == nil {
 		newUser := models.User{
@@ -66,11 +87,11 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 			FirstName: oauthUser.FirstName,
 			LastName:  oauthUser.LastName,
 			Provider:  &oauthUser.Provider,
+			Verified:  true,
 		}
-		err := db.CreateUser(a.DB, &newUser)
+		err := a.UserDB.CreateUser(tx, &newUser)
 		if err != nil {
-			a.Logger.Error("Failed to create user", "error", err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create user: %v", err)})
+			a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to create user", err)
 			return
 		}
 		user = &newUser
@@ -78,16 +99,22 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 		user = existingUser
 	}
 
-	// Generate JWT token
-	token, err := a.generateJWT(user)
+	// 6) Generate JWT token
+	token, err := a.JWTGenerator.GenerateJWT(user)
 	if err != nil {
-		a.Logger.Error("Failed to generate JWT token", "error", err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to generate token: %v", err)})
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to generate JWT", err)
 		return
 	}
 
-	// Set the JWT token as a cookie
+	// 7) Set the JWT token as a cookie
 	a.setAuthCookie(c, token)
 
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+	// 8) Commit the transaction
+	if err := tx.Commit(); err != nil {
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Faile to commit transaction", err)
+		return
+	}
+
+	// 9) Redirect to the /dashboard page
+	c.Redirect(http.StatusFound, a.FrontendAddress+"/dashboard")
 }

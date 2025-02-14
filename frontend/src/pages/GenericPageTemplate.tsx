@@ -66,7 +66,7 @@ const GenericPageTemplate = ({ pageContent }: GenericPageTemplateProps) => {
 								{Object.entries(breadCrumbLinks).map(
 									([name, link], index) => (
 										<React.Fragment
-											key={`breadcrumb-${index}`}
+											key={`breadcrumb-${name}=${link}`}
 										>
 											{index !==
 											Object.keys(breadCrumbLinks)

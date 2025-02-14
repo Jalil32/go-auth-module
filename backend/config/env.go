@@ -13,13 +13,27 @@ import (
 )
 
 type Config struct {
-	Port  string
-	DB    PostgresConfig
-	OAuth OAuthConfig
-	JWT   JWTConfig
-	ClientLocal string
-	ClientProxy string
-	ClientFly string
+	Fly      FlyConfig
+	Frontend FrontendConfig
+	Backend  BackendConfig
+	SMTP     SMTPConfig
+	DB       PostgresConfig
+	OAuth    OAuthConfig
+	JWT      JWTConfig
+	Redis    RedisConfig
+}
+
+type BackendConfig struct {
+	Addr string
+	Port string
+}
+
+type FlyConfig struct {
+	Addr string
+}
+
+type FrontendConfig struct {
+	Addr string
 }
 
 type PostgresConfig struct {
@@ -42,13 +56,31 @@ type JWTConfig struct {
 	Expiry string
 }
 
-func LoadConfig() (*Config, error) {
+type SMTPConfig struct {
+	Host     string
+	Port     string
+	Username string
+	Password string
+}
 
+type RedisConfig struct {
+	Address  string
+	Database string
+	Password string
+}
+
+func LoadConfig() (*Config, error) {
 	cfg := &Config{
-		Port: os.Getenv("PORT"),
-		ClientLocal: os.Getenv("CLIENT_LOCAL"),
-		ClientProxy: os.Getenv("CLIENT_PROXY"),
-		ClientFly: os.Getenv("CLIENT_FLY"),
+		Frontend: FrontendConfig{
+			Addr: os.Getenv("CLIENT_LOCAL"),
+		},
+		Backend: BackendConfig{
+			Addr: os.Getenv("CLIENT_PROXY"),
+			Port: os.Getenv("BACKEND_PORT"),
+		},
+		Fly: FlyConfig{
+			Addr: os.Getenv("CLIENT_FLY"),
+		},
 		DB: PostgresConfig{
 			User:     os.Getenv("POSTGRES_USER"),
 			Name:     os.Getenv("POSTGRES_NAME"),
@@ -65,6 +97,17 @@ func LoadConfig() (*Config, error) {
 		JWT: JWTConfig{
 			Token:  os.Getenv("JWT_TOKEN"),
 			Expiry: os.Getenv("JWT_EXPIRY"),
+		},
+		SMTP: SMTPConfig{
+			Host:     os.Getenv("EMAIL_HOST"),
+			Port:     os.Getenv("EMAIL_PORT"),
+			Username: os.Getenv("EMAIL_USERNAME"),
+			Password: os.Getenv("EMAIL_PASSWORD"),
+		},
+		Redis: RedisConfig{
+			Address:  os.Getenv("REDIS_ADDRESS"),
+			Database: os.Getenv("REDIS_DATABASE"),
+			Password: os.Getenv("REDIS_PASSWORD"),
 		},
 	}
 

@@ -18,17 +18,22 @@ Creating a new migration:
 
 Running all migrations:
 ```
-export $(cat .env | xargs)  # Load environment variables from .env file
+export $(cat .env | xargs)
 goose -dir ./migrations postgres "user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_NAME host=$POSTGRES_HOST port=$POSTGRES_PORT sslmode=$POSTGRES_SSL_MODE" up
 
 ```
 
 Rolling back the last migrations:
 ```
-export $(cat .env | xargs)  # Load environment variables from .env file
-
+export $(cat .env | xargs)
 goose -dir ./migrations postgres "user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_NAME host=$POSTGRES_HOST port=$POSTGRES_PORT sslmode=$POSTGRES_SSL_MODE" down
+
 ```
+
+### Setting up Redis Cache for OTP
+1. Follow installation guide for your OS: https://redis.io/docs/latest/operate/oss_and_stack/install/install-redis/install-redis-on-linux/
+2. Start redis in a terminal. The app is already configured to use the default address, password and db which is what is in the env template
+
 
 ### Start Dev Database
 1. Ensure you have docker, docker compose and postgres installed

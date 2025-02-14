@@ -2,28 +2,38 @@ package routes
 
 import (
 	"log/slog"
+	"wealthscope/backend/config"
 	"wealthscope/backend/internal/controllers/auth"
 	"wealthscope/backend/internal/controllers/bank"
 	"wealthscope/backend/internal/controllers/stock"
+	"wealthscope/backend/internal/db"
+	"wealthscope/backend/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 )
 
-func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
+func Routes(router *gin.Engine, database *sqlx.DB, rdb *redis.Client, logger *slog.Logger, cfg *config.Config) error {
+	// Create user database
+	userDB := &db.UserDB{DB: database}
+	jwtService := &auth.JWTService{SecretKey: cfg.JWT.Token, JwtExpiry: cfg.JWT.Expiry}
+
 	// Initialise Auth Controller instance
-	authController, err := auth.NewAuthController(db, logger)
+	authController, err := auth.NewAuthController(userDB, rdb, logger, jwtService, cfg)
 
 	if err != nil {
 		logger.Error("Failed to initialise AuthController", "error", err)
 		return err
 	}
 
+	middleware := middleware.NewMiddlewareSetup(logger)
+
 	// Initialise Stock Controller instance
 	stockController := stock.NewStockController(logger)
 
 	// Initialise Bank Controller instance
-	bankController := bank.NewBankController(logger, db)
+	bankController := bank.NewBankController(logger, database)
 
 	// Register controllers to routes
 	api := router.Group("/api")
@@ -35,6 +45,7 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 			auth.POST("/logout", authController.Logout)
 			auth.GET("/:provider", authController.SignInWithProvider)
 			auth.GET("/:provider/callback", authController.CallbackHandler)
+			auth.POST("/verify", authController.VerifyOTPHandler)
 		}
 
 		stock := api.Group("/stock")
@@ -54,6 +65,14 @@ func Routes(router *gin.Engine, db *sqlx.DB, logger *slog.Logger) error {
 			})
 		})
 	}
+
+	router.GET("/protected", middleware.AuthMiddleware(authController.JwtToken), func(c *gin.Context) {
+		// Protected route logic
+		user, _ := c.Get("user")
+		c.JSON(200, gin.H{
+			"user": user,
+		})
+	})
 
 	return nil
 }

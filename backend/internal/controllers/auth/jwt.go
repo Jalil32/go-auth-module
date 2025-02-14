@@ -10,37 +10,35 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// generateJWT creates a JWT token for the authenticated user
-func (a *AuthController) generateJWT(user *models.User) (string, error) {
-	// Parse the expiry time from the string (e.g., "10m")
-	expiryTime, err := time.ParseDuration(a.JwtExpiry)
+// JWTService implements JWTGenerator
+type JWTService struct {
+	SecretKey string
+	JwtExpiry string
+}
+
+// GenerateJWT creates a JWT token for the authenticated user
+func (j *JWTService) GenerateJWT(user *models.User) (string, error) {
+	expiryTimeSeconds, err := time.ParseDuration(j.JwtExpiry) // or use config value
 	if err != nil {
-		a.Logger.Error("Failed to parse expiry time", "error", err)
 		return "", fmt.Errorf("failed to parse expiry time: %w", err)
 	}
 
-	// Calculate expiry time in Unix seconds
-	expiryUnix := time.Now().Add(expiryTime).Unix()
+	expiryUnix := time.Now().Add(expiryTimeSeconds).Unix()
 
-	// Create the JWT claims
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
 		"email":   user.Email,
-		"exp":     expiryUnix, // Use the actual Unix timestamp for expiry
+		"exp":     expiryUnix,
 		"iat":     time.Now().Unix(),
 	}
 
-	// Create the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	// Sign the token
-	signedToken, err := token.SignedString([]byte(a.JwtToken))
+	signedToken, err := token.SignedString([]byte(j.SecretKey))
 	if err != nil {
-		a.Logger.Error("Failed to sign JWT token", "error", err)
 		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
 
-	return signedToken, nil // Return the signed token and nil error
+	return signedToken, nil
 }
 
 // setAuthCookie sets the authentication token in a secure, HTTP-only cookie.

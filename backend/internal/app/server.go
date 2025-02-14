@@ -11,9 +11,10 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
+	"github.com/redis/go-redis/v9"
 )
 
-func StartServer(cfg *config.Config, db *sqlx.DB, logger *slog.Logger) error {
+func StartServer(cfg *config.Config, db *sqlx.DB, rdb *redis.Client, logger *slog.Logger) error {
 
 	// Setup OAuth providers
 	goth.UseProviders(
@@ -25,7 +26,7 @@ func StartServer(cfg *config.Config, db *sqlx.DB, logger *slog.Logger) error {
 
 	// Configure CORS
 	corsConfig := cors.Config{
-		AllowOrigins:     []string{cfg.ClientFly, cfg.ClientLocal, cfg.ClientProxy},
+		AllowOrigins:     []string{cfg.Frontend.Addr, "http://localhost:5173", cfg.Fly.Addr, cfg.Frontend.Addr, cfg.Backend.Addr},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -41,11 +42,11 @@ func StartServer(cfg *config.Config, db *sqlx.DB, logger *slog.Logger) error {
 	router.Use(CustomLogger(logger))
 
 	// Register routes
-	routes.Routes(router, db, logger)
+	routes.Routes(router, db, rdb, logger, cfg)
 
 	// Start the server
-	logger.Info("Starting Server", "port", cfg.Port)
-	err := router.Run(("0.0.0.0:" + cfg.Port))
+	logger.Info("Starting Server", "port", cfg.Backend.Port)
+	err := router.Run("0.0.0.0:" + cfg.Backend.Port)
 
 	return err
 }

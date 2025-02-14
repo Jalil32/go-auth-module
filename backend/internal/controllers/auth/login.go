@@ -1,66 +1,132 @@
 package auth
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
-	"wealthscope/backend/internal/db"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Login handles user login.
-func (a *AuthController) Login(c *gin.Context) {
-	var loginRequest struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+type LoginRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}
+
+func (lr *LoginRequest) Validate() *ValidationError {
+	validate := validator.New()
+	err := validate.Struct(lr)
+	if err != nil {
+		fieldErrors := make(map[string]string)
+
+		// Iterate over validation errors
+		for _, err := range err.(validator.ValidationErrors) {
+			field := err.Field() // Field name (e.g., "Email", "Password")
+			tag := err.Tag()     // Validation rule that failed (e.g., "required", "email")
+
+			// Customize the error message based on the field and tag
+			switch tag {
+			case "required":
+				fieldErrors[field] = fmt.Sprintf("%s is required", field)
+			case "email":
+				fieldErrors[field] = fmt.Sprintf("%s must be a valid email address", field)
+			default:
+				fieldErrors[field] = fmt.Sprintf("%s failed validation: %s", field, tag)
+			}
+		}
+
+		return &ValidationError{
+			UserMessage:   "Validation failed",
+			FieldErrors:   fieldErrors,
+			InternalError: err,
+		}
 	}
 
-	// Bind the JSON request body to the loginRequest struct
+	return nil
+}
+
+func (a *AuthController) Login(c *gin.Context) {
+	var loginRequest LoginRequest
+
+	// 1) Bind and validate the request
 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
-		a.Logger.Error("Failed to bind JSON", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Invalid Request Payload", err)
 		return
 	}
 
-	// Find the user by email
-	user, err := db.FindUserByEmail(a.DB, loginRequest.Email)
+	// 2) Validate the request
+	if validationErr := loginRequest.Validate(); validationErr != nil {
+		// Construct a detailed error response
+		errorResponse := gin.H{
+			"message": validationErr.UserMessage,
+			"errors":  validationErr.FieldErrors,
+		}
+
+		// Include internal error details in test mode
+		if gin.Mode() == gin.TestMode {
+			errorResponse["internal_message"] = validationErr.InternalError.Error()
+		}
+
+		// Log the error and send the response
+		a.HandleError(c, http.StatusBadRequest, validationErr.UserMessage, "Validation failed", validationErr.InternalError)
+		return
+	}
+
+	// 3) Find the user by email
+	user, err := a.UserDB.FindUserByEmail(loginRequest.Email)
 	if err != nil {
-		a.Logger.Error("Database error during user lookup", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error during user lookup"})
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Database lookup error", err)
 		return
 	}
 
 	if user == nil {
-		a.Logger.Error("User not found", "email", loginRequest.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		// No user found with the given email
+		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "User not found", errors.New("User not found"))
 		return
 	}
 
+	// 4) Check if the user needs to authenticate via a provider
 	if user.PasswordHash == nil && user.Provider != nil {
-		a.Logger.Error("User needs to sign in with provider", "email", loginRequest.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Please sign in with a provider"})
+		a.HandleError(c, http.StatusUnauthorized, "Please sign in with a provider", "User needs to sign in with provider", errors.New("User needs to sign in with provider"))
 		return
-
 	}
 
-	// Compare the provided password with the hashed password in the database
+	// 5) Compare the provided password with the hashed password
 	if err := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(loginRequest.Password)); err != nil {
-		a.Logger.Error("Invalid password", "email", loginRequest.Email)
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "Invalid password", err)
 		return
 	}
 
-	// Generate JWT token
-	token, err := a.generateJWT(user)
+	// 6) Handle unverified users
+	if !user.Verified {
+		if err := a.sendOTP(user.Email); err != nil {
+			a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to send OTP", err)
+			return
+		}
+		// Not using normal error handling as this is a special case
+		a.Logger.Info("User not verified. OTP has been sent.", "email", user.Email, "userID", user.ID)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "User is not verified.",
+			"user": gin.H{
+				"email":     user.Email,
+				"firstName": user.FirstName,
+				"lastName":  user.LastName,
+			},
+		})
+		return
+	}
+
+	// 7) Generate and set JWT token
+	token, err := a.JWTGenerator.GenerateJWT(user)
 	if err != nil {
-		a.Logger.Error("Failed to generate JWT token", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to generate JWT Token", err)
 		return
 	}
 
-	// Set the JWT token as a cookie
 	a.setAuthCookie(c, token)
 
 	a.Logger.Info("User logged in successfully", "email", loginRequest.Email)
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "token": token})
+	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }

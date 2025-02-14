@@ -1,32 +1,64 @@
 package auth
 
 import (
-	"fmt"
-	"log/slog"
+	"context"
+	"time"
 	"wealthscope/backend/config"
+	"wealthscope/backend/internal/models"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 )
 
+type JWTGenerator interface {
+	GenerateJWT(user *models.User) (string, error)
+}
+
+type RedisClient interface {
+	Get(ctx context.Context, key string) *redis.StringCmd
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+}
+
+type Logger interface {
+	Error(msg string, args ...any)
+	Info(msg string, args ...any)
+}
+
+type UserRepository interface {
+	FindUserByEmail(email string) (*models.User, error)
+	CreateUser(ext sqlx.Ext, user *models.User) error
+	UpdateUser(ext sqlx.Ext, user *models.User) error
+	Beginx() (*sqlx.Tx, error)
+}
+
 type AuthController struct {
-	DB        *sqlx.DB
-	Logger    *slog.Logger
-	JwtToken  string
-	JwtExpiry string
+	UserDB          UserRepository
+	RedisCache      RedisClient
+	Logger          Logger
+	JwtToken        string
+	JwtExpiry       string
+	Host            string
+	Port            string
+	Username        string
+	Password        string
+	FrontendAddress string
+	JWTGenerator    JWTGenerator
 }
 
 // NewAuthController initializes a new AuthController
-func NewAuthController(db *sqlx.DB, logger *slog.Logger) (*AuthController, error) {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		logger.Error("Failed to load config", "error", err)
-		return nil, fmt.Errorf("failed to load config: %w", err) // Error message clarified
-	}
+func NewAuthController(userRepo UserRepository, rdb RedisClient, logger Logger, jwtGenerator JWTGenerator, cfg *config.Config) (*AuthController, error) {
 
 	return &AuthController{
-		DB:        db,
-		Logger:    logger,
-		JwtToken:  cfg.JWT.Token,
-		JwtExpiry: cfg.JWT.Expiry,
+		UserDB:          userRepo,
+		RedisCache:      rdb,
+		Logger:          logger,
+		JwtToken:        cfg.JWT.Token,
+		JwtExpiry:       cfg.JWT.Expiry,
+		Host:            cfg.SMTP.Host,
+		Port:            cfg.SMTP.Port,
+		Username:        cfg.SMTP.Username,
+		Password:        cfg.SMTP.Password,
+		FrontendAddress: cfg.Frontend.Addr,
+		JWTGenerator:    jwtGenerator,
 	}, nil
 }

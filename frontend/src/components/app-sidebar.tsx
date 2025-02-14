@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
 	AudioWaveform,
 	BookOpen,
@@ -6,11 +5,12 @@ import {
 	Command,
 	Frame,
 	GalleryVerticalEnd,
-	Map,
 	PieChart,
 	Settings2,
+	Map as ShadCnMap,
 	SquareTerminal,
 } from "lucide-react";
+import type * as React from "react";
 
 import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
@@ -149,7 +149,7 @@ const data = {
 		{
 			name: "Travel",
 			url: "#",
-			icon: Map,
+			icon: ShadCnMap,
 		},
 	],
 };

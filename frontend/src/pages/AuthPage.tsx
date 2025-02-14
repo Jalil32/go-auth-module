@@ -1,8 +1,8 @@
 import { GalleryVerticalEnd } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { LoginForm } from "../components/login-form.tsx";
 import { RegisterForm } from "../components/register-form.tsx";
-import { useLocation, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "motion/react";
 
 export default function AuthPage() {
 	const location = useLocation();
