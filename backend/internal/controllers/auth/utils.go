@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-gomail/gomail"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -140,4 +141,32 @@ func (a *AuthController) sendForgotPasswordToken(email string, link string) erro
 	}
 
 	return nil
+}
+
+func (a *AuthController) generateForgotPasswordLink(email string) (string, error) {
+	token := uuid.New().String()
+
+	key := fmt.Sprintf("forgot_password:%v", token)
+	ctx := context.Background()
+	err := a.RedisCache.Set(ctx, key, email, 15*time.Minute).Err()
+	if err != nil {
+		return "", fmt.Errorf("Storing token in redis failed: %v", err)
+	}
+
+	link := fmt.Sprintf("http://wealthscope/forgot-password/%v", token)
+	return link, nil
+}
+
+// Validate forgot password token
+func (a *AuthController) validateForgotPasswordToken(token string) (string, error) {
+	ctx := context.Background()
+
+	key := fmt.Sprintf("forgot_password:%v", token)
+	email, err := a.RedisCache.Get(ctx, key).Result()
+	if err != nil {
+		return "", fmt.Errorf("Invalid or expired token: %v", err)
+	}
+
+	a.RedisCache.Del(ctx, key)
+	return email, nil
 }

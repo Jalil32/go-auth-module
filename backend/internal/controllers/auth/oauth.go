@@ -21,6 +21,7 @@ func (a *AuthController) SignInWithProvider(c *gin.Context) {
 	allowedProviders := map[string]bool{
 		"google": true,
 	}
+
 	if !allowedProviders[provider] {
 		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Invalid provider specified", nil)
 		return

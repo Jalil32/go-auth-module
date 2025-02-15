@@ -11,8 +11,8 @@ import (
 )
 
 type registerRequest struct {
-	Email     string `json:"email" validate:"required"`
-	Password  string `json:"password" validate:"required"`
+	Email     string `json:"email" validate:"email,required"`
+	Password  string `json:"password" validate:"required,strong_password"`
 	FirstName string `json:"firstName" validate:"required"`
 	LastName  string `json:"lastName" validate:"required"`
 }
@@ -24,7 +24,7 @@ type ValidationError struct {
 }
 
 // Validate validates the requestPayload using the validator
-func (rp *registerRequest) validate() *ValidationError {
+func (rp *registerRequest) Validate() *ValidationError {
 	validate := validator.New()
 	validate.RegisterValidation("strong_password", passwordValidator)
 
@@ -100,7 +100,7 @@ func (a *AuthController) Register(c *gin.Context) {
 	}
 
 	// 2) Validate the requestPayload
-	if validationErr := registerRequest.validate(); validationErr != nil {
+	if validationErr := registerRequest.Validate(); validationErr != nil {
 		// Construct a detailed error response
 		errorResponse := gin.H{
 			"message": validationErr.UserMessage,
