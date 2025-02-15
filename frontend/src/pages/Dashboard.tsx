@@ -1,15 +1,10 @@
+import { API_BASE_URL } from "@/components/constants/http";
 import { useEffect, useState } from "react";
 import GenericPageTemplate from "./GenericPageTemplate";
-
-const API_BASE_URL = import.meta.env.DEV
-	? import.meta.env.VITE_API_DEV
-	: import.meta.env.VITE_API_FLY;
 
 export default function Dashboard() {
 	const [backendData, setBackendData] = useState(null);
 	const [error, setError] = useState(null);
-
-	console.log(API_BASE_URL); // remove after use
 
 	// Temporary for ya'll to see backend response - remove when updating this component
 	useEffect(() => {

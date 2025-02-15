@@ -40,7 +40,6 @@ export function LoginForm({ className, toggleMode, ...props }: LoginFormProps) {
 			}
 		} catch (error) {
 			if (axios.isAxiosError(error)) {
-				console.log(error.response);
 				if (error.response?.status === 401) {
 					if (
 						error.response?.data?.message ===

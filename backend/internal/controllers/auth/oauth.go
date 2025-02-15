@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 	"wealthscope/backend/internal/models"
 
@@ -13,7 +14,7 @@ func (a *AuthController) SignInWithProvider(c *gin.Context) {
 	// 1) Check that provider exists
 	provider := c.Param("provider")
 	if provider == "" {
-		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Provider not specified", nil)
+		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Provider not specified", errors.New("Provider not specified"))
 		return
 	}
 
@@ -23,7 +24,7 @@ func (a *AuthController) SignInWithProvider(c *gin.Context) {
 	}
 
 	if !allowedProviders[provider] {
-		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Invalid provider specified", nil)
+		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Invalid provider specified", errors.New("Invalid provider specified"))
 		return
 	}
 
@@ -41,7 +42,7 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 	// 1) Check that the provider exists
 	provider := c.Param("provider")
 	if provider == "" {
-		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Provider not specified", nil)
+		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Provider not specified", errors.New(("Provider not specified")))
 		return
 	}
 

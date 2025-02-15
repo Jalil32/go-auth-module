@@ -144,7 +144,7 @@ func TestAuthController_Login(t *testing.T) {
 			},
 			mockRedis:      &MockRedisClient{},
 			expectedStatus: http.StatusUnauthorized,
-			expectedBody:   `{"error":"No error", "internal_message":"User not found", "message":"Invalid email or password"}`,
+			expectedBody:   `{"error":"User not found", "internal_message":"User not found", "message":"Invalid email or password"}`,
 		},
 		{
 			name: "Database Error",
@@ -218,7 +218,7 @@ func TestAuthController_Login(t *testing.T) {
 			},
 			mockRedis:      &MockRedisClient{},
 			expectedStatus: http.StatusUnauthorized,
-			expectedBody:   `{"error":"No error", "internal_message":"User needs to sign in with provider", "message":"Please sign in with a provider"}`,
+			expectedBody:   `{"error":"User needs to sign in with provider", "internal_message":"User needs to sign in with provider", "message":"Please sign in with a provider"}`,
 		},
 		{
 			name: "Successful Login",

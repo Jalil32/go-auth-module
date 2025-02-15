@@ -46,7 +46,6 @@ func main() {
 	_, err = rdb.Ping(ctx).Result()
 	if err != nil {
 		logger.Error("Redis connection was refused", "error", err)
-		os.Exit(1)
 	} else {
 		logger.Info("Redis successfully connected")
 	}
@@ -55,13 +54,11 @@ func main() {
 	db, err := db.InitDb(cfg)
 	if err != nil {
 		logger.Error("Failed to connect to database", "error", err)
-		os.Exit(1)
 	}
 
 	// Test the database connection
 	if err := db.Ping(); err != nil {
 		logger.Error("Failed to connect to database", "error", err)
-		os.Exit(1)
 	} else {
 		logger.Info(("Successfully connected to postgres database"))
 	}

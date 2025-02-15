@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -82,13 +83,13 @@ func (a *AuthController) Login(c *gin.Context) {
 
 	if user == nil {
 		// No user found with the given email
-		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "User not found", nil)
+		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "User not found", errors.New("User not found"))
 		return
 	}
 
 	// 4) Check if the user needs to authenticate via a provider
 	if user.PasswordHash == nil && user.Provider != nil {
-		a.HandleError(c, http.StatusUnauthorized, "Please sign in with a provider", "User needs to sign in with provider", nil)
+		a.HandleError(c, http.StatusUnauthorized, "Please sign in with a provider", "User needs to sign in with provider", errors.New("User needs to sign in with provider"))
 		return
 	}
 

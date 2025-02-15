@@ -18,12 +18,12 @@ type JWTService struct {
 
 // GenerateJWT creates a JWT token for the authenticated user
 func (j *JWTService) GenerateJWT(user *models.User) (string, error) {
-	expiryTime, err := time.ParseDuration(j.JwtExpiry) // or use config value
+	expiryTimeSeconds, err := time.ParseDuration(j.JwtExpiry) // or use config value
 	if err != nil {
 		return "", fmt.Errorf("failed to parse expiry time: %w", err)
 	}
 
-	expiryUnix := time.Now().Add(expiryTime).Unix()
+	expiryUnix := time.Now().Add(expiryTimeSeconds).Unix()
 
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
