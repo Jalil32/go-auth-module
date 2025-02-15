@@ -153,7 +153,7 @@ func (a *AuthController) generateForgotPasswordLink(email string) (string, error
 		return "", fmt.Errorf("Storing token in redis failed: %v", err)
 	}
 
-	link := fmt.Sprintf("http://wealthscope/forgot-password/%v", token)
+	link := fmt.Sprintf("%s/reset-password?token=%s", a.FrontendAddress, token)
 	return link, nil
 }
 
