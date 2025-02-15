@@ -7,7 +7,7 @@ import (
 )
 
 func (a *AuthController) HandleError(c *gin.Context, statusCode int, userMessage string, internalMessage string, err error) {
-	a.Logger.Error("internal message", internalMessage, "user message", userMessage, "error", err)
+	a.Logger.Error("Request", "internal message", internalMessage, "user message", userMessage, "error", err)
 
 	if err == nil {
 		err = errors.New("No error")

@@ -129,7 +129,7 @@ func (a *AuthController) ForgotPasswordHandler(c *gin.Context) {
 	}
 
 	if user == nil {
-		a.HandleError(c, http.StatusUnauthorized, "If your account exists, we have sent you an email to reset your password.", "User not found", nil)
+		a.HandleError(c, http.StatusUnauthorized, "If your account exists, we have sent you an email to reset your password.", "User not found", errors.New("No User"))
 		return
 	}
 
