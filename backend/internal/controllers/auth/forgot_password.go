@@ -2,101 +2,15 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
-
-type Validatable interface {
-	Validate() *ValidationError
-}
-
-type forgotPasswordRequest struct {
-	Email string `json:"email" validate:"required,email"`
-}
-
-type resetPasswordRequest struct {
-	NewPassword string `json:"newPassword" validate:"required,strong_password"`
-}
-
-// forgotPasswordRequest implements the Validatable interface
-func (rp *forgotPasswordRequest) Validate() *ValidationError {
-	validate := validator.New()
-	validate.RegisterValidation("strong_password", passwordValidator)
-
-	err := validate.Struct(rp)
-	if err != nil {
-		fieldErrors := make(map[string]string)
-
-		// Iterate over validation errors
-		for _, err := range err.(validator.ValidationErrors) {
-			field := err.Field() // Field name (e.g., "Email", "Password")
-			tag := err.Tag()     // Validation rule that failed (e.g., "required", "email", "strong_password")
-
-			// Customize the error message based on the field and tag
-			switch tag {
-			case "required":
-				fieldErrors[field] = fmt.Sprintf("%s is required", field)
-			case "email":
-				fieldErrors[field] = fmt.Sprintf("%s must be a valid email address", field)
-			case "strong_password":
-				fieldErrors[field] = fmt.Sprintf("%s must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, one digit, and one special character", field)
-			default:
-				fieldErrors[field] = fmt.Sprintf("%s failed validation: %s", field, tag)
-			}
-		}
-
-		return &ValidationError{
-			UserMessage:   "Validation failed",
-			FieldErrors:   fieldErrors,
-			InternalError: err,
-		}
-	}
-
-	return nil
-}
-
-// resetPasswordRequest implements the Validatable interface
-func (rp *resetPasswordRequest) Validate() *ValidationError {
-	validate := validator.New()
-	validate.RegisterValidation("strong_password", passwordValidator)
-
-	err := validate.Struct(rp)
-	if err != nil {
-		fieldErrors := make(map[string]string)
-
-		// Iterate over validation errors
-		for _, err := range err.(validator.ValidationErrors) {
-			field := err.Field() // Field name (e.g., "NewPassword")
-			tag := err.Tag()     // Validation rule that failed (e.g., "required", "min")
-
-			// Customize the error message based on the field and tag
-			switch tag {
-			case "required":
-				fieldErrors[field] = fmt.Sprintf("%s is required", field)
-			case "min":
-				fieldErrors[field] = fmt.Sprintf("%s must be at least 8 characters long", field)
-			default:
-				fieldErrors[field] = fmt.Sprintf("%s failed validation: %s", field, tag)
-			}
-		}
-
-		return &ValidationError{
-			UserMessage:   "Validation failed",
-			FieldErrors:   fieldErrors,
-			InternalError: err,
-		}
-	}
-
-	return nil
-}
 
 // Endpoint to handle forgot password
 func (a *AuthController) ForgotPasswordHandler(c *gin.Context) {
 	// 1) Unmarshal request
-	var request forgotPasswordRequest
+	var request ForgotPasswordRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Invalid Request Payload", err)
@@ -165,7 +79,7 @@ func (a *AuthController) ResetPasswordHandler(c *gin.Context) {
 		return
 	}
 	// 1) Unmarshal the request
-	var request resetPasswordRequest
+	var request ResetPasswordRequest
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		a.HandleError(c, http.StatusBadRequest, "Bad Request", "Invalid Request Payload", err)
