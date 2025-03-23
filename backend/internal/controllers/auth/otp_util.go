@@ -9,17 +9,7 @@ import (
 	"time"
 
 	"github.com/go-gomail/gomail"
-	"golang.org/x/crypto/bcrypt"
 )
-
-func (a *AuthController) hashPassword(password string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		a.Logger.Error("Failed to hash password", "error", err)
-		return "", fmt.Errorf("Failed to hash password: %w", err)
-	}
-	return string(hashedPassword), nil
-}
 
 func (a *AuthController) storeOTP(email string, otp string) error {
 	ctx := context.Background()
@@ -47,14 +37,12 @@ func (a *AuthController) sendOTP(email string) error {
 	// 1) Generate OTP
 	otp, err := a.generateOTP()
 	if err != nil {
-		a.Logger.Error("Failed to generate otp", "error", err)
 		return fmt.Errorf("failed to generate otp: %w", err)
 	}
 
 	// 2) Store OTP
 	err = a.storeOTP(email, otp)
 	if err != nil {
-		a.Logger.Error("Failed to store otp", "error", err)
 		return fmt.Errorf("failed to store otp: %w", err)
 	}
 
@@ -70,7 +58,6 @@ func (a *AuthController) sendOTP(email string) error {
 	// 5) Convert port to int
 	port, err := strconv.Atoi(a.Port)
 	if err != nil {
-		a.Logger.Error("Failed to convert port to int", "error", err)
 		return fmt.Errorf("failed to convert port: %w", err)
 	}
 
@@ -91,12 +78,10 @@ func (a *AuthController) sendOTP(email string) error {
 	select {
 	case <-ctx.Done():
 		// Context timed out
-		a.Logger.Error("Failed to send OTP: timeout reached")
 		return fmt.Errorf("failed to send OTP: timeout reached")
 	case err := <-done:
 		// Email sending completed
 		if err != nil {
-			a.Logger.Error("Failed to send OTP", "error", err)
 			return fmt.Errorf("failed to send OTP: %w", err)
 		}
 	}

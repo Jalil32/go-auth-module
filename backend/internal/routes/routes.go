@@ -46,6 +46,8 @@ func Routes(router *gin.Engine, database *sqlx.DB, rdb *redis.Client, logger *sl
 			auth.GET("/:provider", authController.SignInWithProvider)
 			auth.GET("/:provider/callback", authController.CallbackHandler)
 			auth.POST("/verify", authController.VerifyOTPHandler)
+			auth.POST("/forgot-password", authController.ForgotPasswordHandler)
+			auth.POST("/reset-password", authController.ResetPasswordHandler)
 		}
 
 		stock := api.Group("/stock")

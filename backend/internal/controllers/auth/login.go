@@ -2,50 +2,11 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
-
-type LoginRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-}
-
-func (lr *LoginRequest) Validate() *ValidationError {
-	validate := validator.New()
-	err := validate.Struct(lr)
-	if err != nil {
-		fieldErrors := make(map[string]string)
-
-		// Iterate over validation errors
-		for _, err := range err.(validator.ValidationErrors) {
-			field := err.Field() // Field name (e.g., "Email", "Password")
-			tag := err.Tag()     // Validation rule that failed (e.g., "required", "email")
-
-			// Customize the error message based on the field and tag
-			switch tag {
-			case "required":
-				fieldErrors[field] = fmt.Sprintf("%s is required", field)
-			case "email":
-				fieldErrors[field] = fmt.Sprintf("%s must be a valid email address", field)
-			default:
-				fieldErrors[field] = fmt.Sprintf("%s failed validation: %s", field, tag)
-			}
-		}
-
-		return &ValidationError{
-			UserMessage:   "Validation failed",
-			FieldErrors:   fieldErrors,
-			InternalError: err,
-		}
-	}
-
-	return nil
-}
 
 func (a *AuthController) Login(c *gin.Context) {
 	var loginRequest LoginRequest
