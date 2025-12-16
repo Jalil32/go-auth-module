@@ -1,4 +1,4 @@
-name: CI for Go and React TypeScript Project
+name: CI for Go Backend
 
 on:
   push:
@@ -15,53 +15,33 @@ jobs:
     steps:
     # Checkout code
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     # Set up Go
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
-        go-version: 1.22.0 # Adjust to your Go version
+        go-version: '1.22.0'
 
-    # Install and test Go backend
-    - name: Install dependencies for Go
-      working-directory: ./backend # Adjust to your Go backend directory
-      run: go mod tidy
+    # Install dependencies
+    - name: Install dependencies
+      run: go mod download
 
-    - name: Test Go backend
-      working-directory: ./backend # Adjust to your Go backend directory
-      run: go test ./tests
+    # Verify dependencies
+    - name: Verify dependencies
+      run: go mod verify
 
-    # Set up Node.js for React
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
+    # Run golangci-lint
+    - name: Run golangci-lint
+      uses: golangci/golangci-lint-action@v6
       with:
-        node-version: 20 # Adjust to your Node.js version
-        
-    - name: Install Bun
-      run: curl -fsSL https://bun.sh/install | bash
-      
-    # Install dependencies for React  
-    - name: Install frontend dependencies
-      working-directory: ./frontend
-      run: ~/.bun/bin/bun install
+        version: latest
+        args: --timeout=5m
 
-    # Format the front end code
-    - name: Format using biome
-      working-directory: ./frontend
-      run: ~/.bun/bin/bunx biome format --write ./src
+    # Build the application
+    - name: Build application
+      run: go build -v ./cmd/app
 
-    # Lint the front end code
-    - name: Lint using biome
-      working-directory: ./frontend
-      run: ~/.bun/bin/bunx biome lint ./src
-
-    # Build React frontend
-    - name: Build React frontend
-      working-directory: ./frontend
-      run: ~/.bun/bin/bunx vite build
-      
-    # Uncomment once we have some front end tests
-    # - name: Test React frontend
-    #   working-directory: ./frontend
-    #   run: npm test
+    # Run tests
+    - name: Run tests
+      run: go test -v -race ./...
