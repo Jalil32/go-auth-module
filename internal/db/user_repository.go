@@ -3,9 +3,10 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"github.com/jalil32/go-auth-module/internal/models"
 
 	"github.com/jmoiron/sqlx"
+
+	"github.com/jalil32/go-auth-module/internal/models"
 )
 
 type UserDB struct {

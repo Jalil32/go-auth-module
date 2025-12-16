@@ -55,15 +55,15 @@ func (a *AuthController) Login(c *gin.Context) {
 	}
 
 	// 5) Compare the provided password with the hashed password
-	if err := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(loginRequest.Password)); err != nil {
-		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "Invalid password", err)
+	if compareErr := bcrypt.CompareHashAndPassword([]byte(*user.PasswordHash), []byte(loginRequest.Password)); compareErr != nil {
+		a.HandleError(c, http.StatusUnauthorized, "Invalid email or password", "Invalid password", compareErr)
 		return
 	}
 
 	// 6) Handle unverified users
 	if !user.Verified {
-		if err := a.sendOTP(user.Email); err != nil {
-			a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to send OTP", err)
+		if otpErr := a.sendOTP(user.Email); otpErr != nil {
+			a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to send OTP", otpErr)
 			return
 		}
 		// Not using normal error handling as this is a special case

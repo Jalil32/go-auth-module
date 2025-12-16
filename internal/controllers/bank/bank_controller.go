@@ -6,10 +6,11 @@ import (
 	"regexp"
 	"strconv"
 	"time"
-	"github.com/jalil32/go-auth-module/internal/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+
+	"github.com/jalil32/go-auth-module/internal/models"
 )
 
 type BankController struct {
@@ -65,7 +66,12 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 	for _, record := range records[1:] { // Skip the header row
 
 		// Date data
-		dateStr := record[dateIndex].(string)
+		dateStr, ok := record[dateIndex].(string)
+		if !ok {
+			bc.Logger.Error("Date field is not a string")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Date field must be a string"})
+			return
+		}
 		if !datePattern.MatchString(dateStr) { // User regex to validate date format
 			bc.Logger.Error("Invalid date format", "date", dateStr)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
@@ -79,7 +85,12 @@ func (bc *BankController) UploadBankStatement(c *gin.Context) {
 		}
 
 		// Amount data
-		amountStr := record[amountIndex].(string)
+		amountStr, ok := record[amountIndex].(string)
+		if !ok {
+			bc.Logger.Error("Amount field is not a string")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Amount field must be a string"})
+			return
+		}
 		if !amountPattern.MatchString(amountStr) {
 			bc.Logger.Error("Invalid amount format", "amount", amountStr)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid amount format"})

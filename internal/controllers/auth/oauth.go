@@ -3,10 +3,11 @@ package auth
 import (
 	"errors"
 	"net/http"
-	"github.com/jalil32/go-auth-module/internal/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth/gothic"
+
+	"github.com/jalil32/go-auth-module/internal/models"
 )
 
 // SignInWithProvider handles third-party sign-in using a provider (e.g., Google)
@@ -90,9 +91,10 @@ func (a *AuthController) CallbackHandler(c *gin.Context) {
 			Provider:  &oauthUser.Provider,
 			Verified:  true,
 		}
-		err := a.UserDB.CreateUser(tx, &newUser)
-		if err != nil {
-			a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to create user", err)
+		createErr := a.UserDB.CreateUser(tx, &newUser)
+		if createErr != nil {
+			err = createErr
+			a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to create user", createErr)
 			return
 		}
 		user = &newUser

@@ -2,14 +2,16 @@ package main
 
 import (
 	"context"
-	"github.com/jalil32/go-auth-module/config"
-	server "github.com/jalil32/go-auth-module/internal/app"
-	"github.com/jalil32/go-auth-module/internal/db"
-	"github.com/lmittmann/tint"
-	"github.com/redis/go-redis/v9"
 	"log/slog"
 	"os"
 	"strconv"
+
+	"github.com/lmittmann/tint"
+	"github.com/redis/go-redis/v9"
+
+	"github.com/jalil32/go-auth-module/config"
+	server "github.com/jalil32/go-auth-module/internal/app"
+	"github.com/jalil32/go-auth-module/internal/db"
 )
 
 func main() {
@@ -36,7 +38,11 @@ func main() {
 	})
 
 	// Ensure the connection is properly closed gracefully
-	defer rdb.Close()
+	defer func() {
+		if closeErr := rdb.Close(); closeErr != nil {
+			logger.Error("Failed to close Redis connection", "error", closeErr)
+		}
+	}()
 
 	ctx := context.Background()
 
@@ -61,11 +67,14 @@ func main() {
 		logger.Info(("Successfully connected to postgres database"))
 	}
 
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			logger.Error("Failed to close database connection", "error", closeErr)
+		}
+	}()
 
-	// Start the server
+	// Start the server (blocks until error or termination)
 	if err := server.StartServer(cfg, db, rdb, logger); err != nil {
 		logger.Error(err.Error())
-		os.Exit(1)
 	}
 }

@@ -3,8 +3,6 @@ package server
 import (
 	"log/slog"
 	"time"
-	"github.com/jalil32/go-auth-module/config"
-	"github.com/jalil32/go-auth-module/internal/routes"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -12,6 +10,9 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/providers/google"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/jalil32/go-auth-module/config"
+	"github.com/jalil32/go-auth-module/internal/routes"
 )
 
 func StartServer(cfg *config.Config, db *sqlx.DB, rdb *redis.Client, logger *slog.Logger) error {
@@ -42,7 +43,10 @@ func StartServer(cfg *config.Config, db *sqlx.DB, rdb *redis.Client, logger *slo
 	router.Use(CustomLogger(logger))
 
 	// Register routes
-	routes.Routes(router, db, rdb, logger, cfg)
+	if err := routes.Routes(router, db, rdb, logger, cfg); err != nil {
+		logger.Error("Failed to register routes", "error", err)
+		return err
+	}
 
 	// Start the server
 	logger.Info("Starting Server", "port", cfg.Backend.Port)

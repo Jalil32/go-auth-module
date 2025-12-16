@@ -3,11 +3,12 @@ package auth
 import (
 	"context"
 	"time"
-	"github.com/jalil32/go-auth-module/config"
-	"github.com/jalil32/go-auth-module/internal/models"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/jalil32/go-auth-module/config"
+	"github.com/jalil32/go-auth-module/internal/models"
 )
 
 type JWTGenerator interface {

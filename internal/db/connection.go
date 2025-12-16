@@ -2,10 +2,11 @@ package db
 
 import (
 	"fmt"
-	"github.com/jalil32/go-auth-module/config"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+
+	"github.com/jalil32/go-auth-module/config"
 )
 
 func InitDb(cfg *config.Config) (*sqlx.DB, error) {

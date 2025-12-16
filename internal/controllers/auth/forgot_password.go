@@ -144,8 +144,9 @@ func (a *AuthController) ResetPasswordHandler(c *gin.Context) {
 		return
 	}
 
-	if err := a.UserDB.UpdateUser(tx, user); err != nil {
-		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to update password", err)
+	if updateErr := a.UserDB.UpdateUser(tx, user); updateErr != nil {
+		err = updateErr
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to update password", updateErr)
 		return
 	}
 

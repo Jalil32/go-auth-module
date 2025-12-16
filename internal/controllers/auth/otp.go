@@ -54,8 +54,9 @@ func (a *AuthController) VerifyOTPHandler(c *gin.Context) {
 
 	existingUser.Verified = true
 
-	if err := a.UserDB.UpdateUser(tx, existingUser); err != nil {
-		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to update user", err)
+	if updateErr := a.UserDB.UpdateUser(tx, existingUser); updateErr != nil {
+		err = updateErr
+		a.HandleError(c, http.StatusInternalServerError, "Something went wrong...", "Failed to update user", updateErr)
 		return
 	}
 
@@ -77,7 +78,4 @@ func (a *AuthController) VerifyOTPHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User successfully verified",
 	})
-}
-
-func (a *AuthController) generateNewOTPHandler(c *gin.Context) {
 }

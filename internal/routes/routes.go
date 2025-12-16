@@ -2,16 +2,17 @@ package routes
 
 import (
 	"log/slog"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
+
 	"github.com/jalil32/go-auth-module/config"
 	"github.com/jalil32/go-auth-module/internal/controllers/auth"
 	"github.com/jalil32/go-auth-module/internal/controllers/bank"
 	"github.com/jalil32/go-auth-module/internal/controllers/stock"
 	"github.com/jalil32/go-auth-module/internal/db"
 	"github.com/jalil32/go-auth-module/internal/middleware"
-
-	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
-	"github.com/redis/go-redis/v9"
 )
 
 func Routes(router *gin.Engine, database *sqlx.DB, rdb *redis.Client, logger *slog.Logger, cfg *config.Config) error {

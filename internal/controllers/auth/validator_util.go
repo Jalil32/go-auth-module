@@ -57,7 +57,9 @@ var validate *validator.Validate
 
 func init() {
 	validate = validator.New()
-	validate.RegisterValidation("strong_password", passwordValidator)
+	if err := validate.RegisterValidation("strong_password", passwordValidator); err != nil {
+		panic(fmt.Sprintf("failed to register password validator: %v", err))
+	}
 }
 
 func validateStruct(s interface{}) *ValidationError {
@@ -66,7 +68,15 @@ func validateStruct(s interface{}) *ValidationError {
 		var errorMessages []string
 
 		// Iterate over validation errors
-		for _, err := range err.(validator.ValidationErrors) {
+		validationErrors, ok := err.(validator.ValidationErrors)
+		if !ok {
+			return &ValidationError{
+				UserMessage:   "Validation failed",
+				InternalError: err,
+			}
+		}
+
+		for _, err := range validationErrors {
 			field := err.Field() // Field name (e.g., "Email", "Password")
 			tag := err.Tag()     // Validation rule that failed (e.g., "required", "email", "strong_password")
 

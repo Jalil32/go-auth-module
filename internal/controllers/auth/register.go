@@ -3,9 +3,10 @@ package auth
 import (
 	"errors"
 	"net/http"
-	"github.com/jalil32/go-auth-module/internal/models"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/jalil32/go-auth-module/internal/models"
 )
 
 func (a *AuthController) Register(c *gin.Context) {

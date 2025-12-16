@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-	"github.com/jalil32/go-auth-module/internal/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/jalil32/go-auth-module/internal/models"
 )
 
 // JWTService implements JWTGenerator

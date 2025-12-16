@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"time"
-	"github.com/jalil32/go-auth-module/internal/models"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
+
+	"github.com/jalil32/go-auth-module/internal/models"
 )
 
 // MockRedisClient is a mock implementation of the RedisClient interface.

@@ -10,14 +10,15 @@ import (
 	"os"
 	"testing"
 	"time"
-	"github.com/jalil32/go-auth-module/config"
-	"github.com/jalil32/go-auth-module/internal/controllers/auth"
-	"github.com/jalil32/go-auth-module/internal/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/jalil32/go-auth-module/config"
+	"github.com/jalil32/go-auth-module/internal/controllers/auth"
+	"github.com/jalil32/go-auth-module/internal/models"
 )
 
 // Helper function to create a test AuthController.
